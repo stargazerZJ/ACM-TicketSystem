@@ -15,5 +15,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -march=native")
 
 file(GLOB_RECURSE main_src src/*.cpp )
+file(GLOB_RECURSE third_party_src third_party//*.cpp )
 
-add_executable(code ${main_src})
+add_executable(code ${main_src} ${third_party_src})
