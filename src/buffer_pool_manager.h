@@ -12,14 +12,14 @@ namespace storage {
 
 /**
  * @brief Currently, no caching is implemented.
- * @tparam PagePerFrame
+ * @tparam PagesPerFrame
  */
-template<int PagePerFrame>
+template<int PagesPerFrame>
 class BufferPoolManager;
 
-template<int PagePerFrame>
+template<int PagesPerFrame>
 class Frame {
-  friend class BufferPoolManager<PagePerFrame>;
+  friend class BufferPoolManager<PagesPerFrame>;
  public:
   auto GetData() -> char * { return data_; }
   auto GetPageId() -> page_id_t { return page_id_; }
@@ -30,7 +30,7 @@ class Frame {
   page_id_t page_id_ = INVALID_PAGE_ID;
   bool is_dirty_ = false;
   int pin_count_ = 0;
-  char data_[PAGE_SIZE * PagePerFrame]{};
+  char data_[PAGE_SIZE * PagesPerFrame]{};
 };
 
 template<>
