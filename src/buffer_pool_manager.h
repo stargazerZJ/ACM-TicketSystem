@@ -21,6 +21,7 @@ template<int PagesPerFrame>
 class Frame {
   friend class BufferPoolManager<PagesPerFrame>;
  public:
+  static constexpr int kFrameSize = PAGE_SIZE * PagesPerFrame;
   auto GetData() -> char * { return data_; }
   auto GetPageId() -> page_id_t { return page_id_; }
   auto GetPinCount() -> int { return pin_count_; }
@@ -30,7 +31,7 @@ class Frame {
   page_id_t page_id_ = INVALID_PAGE_ID;
   bool is_dirty_ = false;
   int pin_count_ = 0;
-  char data_[PAGE_SIZE * PagesPerFrame]{};
+  char data_[kFrameSize]{};
 };
 
 template<>
