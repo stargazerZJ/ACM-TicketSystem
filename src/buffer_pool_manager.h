@@ -41,17 +41,29 @@ class BufferPoolManager<1> {
     pages_.initialize(reset);
   }
 
-  auto NewFrameGuarded(page_id_t *page_id);
-  auto FetchFrameBasic(page_id_t page_id);
-
   class BasicFrameGuard { // Currently, one frame can only be pinned once
     friend BufferPoolManager<1>;
    public:
+    BasicFrameGuard() = default;
+    BasicFrameGuard(const BasicFrameGuard &) = delete; // because only one frame can be pinned currently
+    BasicFrameGuard(BasicFrameGuard &&that) noexcept: bpm_(that.bpm_), frame_(that.frame_) {
+      that.frame_ = nullptr;
+    }
+
+    BasicFrameGuard &operator=(const BasicFrameGuard &) = delete;
+    BasicFrameGuard &operator=(BasicFrameGuard &&that) noexcept {
+      if (this == &that) {
+        return *this;
+      }
+      Drop();
+      bpm_ = that.bpm_;
+      frame_ = that.frame_;
+      that.frame_ = nullptr;
+      return *this;
+    }
 
     ~BasicFrameGuard() {
-      if (frame_ != nullptr) {
-        Drop();
-      }
+      Drop();
     }
 
     auto PageId() -> page_id_t { return frame_->GetPageId(); }
@@ -69,6 +81,7 @@ class BufferPoolManager<1> {
       return reinterpret_cast<T *>(GetDataMut());
     }
     void Drop() { // as no caching is implemented, this is equivalent to unpin
+      if (frame_ == nullptr) return;
       if (frame_->is_dirty_) {
         bpm_->pages_.setPage(frame_->page_id_, reinterpret_cast<const int *>(frame_->GetData()));
       }
@@ -86,21 +99,11 @@ class BufferPoolManager<1> {
     BufferPoolManager<1> *bpm_;
     Frame<1> *frame_;
   };
+  auto NewFrameGuarded(page_id_t *page_id = nullptr) -> BasicFrameGuard;
+  auto FetchFrameBasic(page_id_t page_id) -> BasicFrameGuard;
+
  private:
   external_memory::Pages pages_;
 };
-auto BufferPoolManager<1>::NewFrameGuarded(page_id_t *page_id) {
-  auto frame = new Frame<1>();
-  *page_id = pages_.newPage(reinterpret_cast<const int *>(frame->GetData()));
-  frame->page_id_ = *page_id;
-  return BasicFrameGuard(this, frame);
-}
-auto BufferPoolManager<1>::FetchFrameBasic(page_id_t page_id) {
-  auto frame = new Frame<1>();
-  pages_.fetchPage(page_id);
-  pages_.getPage(page_id, reinterpret_cast<int *>(frame->GetData()));
-  frame->page_id_ = page_id;
-  return BasicFrameGuard(this, frame);
-}
 
 } // namespace storage

@@ -5,6 +5,7 @@
 #pragma once
 #include <algorithm>
 #include <execution>
+#include "buffer_pool_manager.h"
 
 namespace storage {
 
@@ -57,7 +58,7 @@ static_assert(sizeof(BPlusTreeFrame) == 4, "BPlusTreeFrame size is not correct")
  * | HEADER | KEY(1) | KEY(2) | ... | KEY(n) | PAGE_ID(0) | PAGE_ID(1) | ... | PAGE_ID(n) |
  * ----------------------------------------------------------------------------------------
  */
-template<typename KeyType, typename ValueType, int PagePerFrame>
+template<typename KeyType, typename ValueType, int PagePerFrame = 1>
 class BPlusTreeInternalFrame : public BPlusTreeFrame {
  public:
   // Delete all constructor / destructor to ensure memory safety
@@ -69,6 +70,14 @@ class BPlusTreeInternalFrame : public BPlusTreeFrame {
    * the creation of a new frame to make a valid `BPlusTreeInternalFrame`
    */
   void Init();
+
+  /**
+   * @return The pointer to the keys array
+   */
+  auto Keys() -> KeyType * { return keys_ - 1; }
+  auto Keys() const -> const KeyType * { return keys_ - 1; }
+  auto Values() -> ValueType * { return values_; }
+  auto Values() const -> const ValueType * { return values_; }
 
   /**
    * @param index The index of the key to get. Index must be non-zero.
@@ -135,7 +144,7 @@ auto BPlusTreeInternalFrame<KeyType, ValueType, PagePerFrame>::ValueIndex(const 
  * | PageType (1) | CurrentSize (31) | NextPageId (32) |
  * -----------------------------------------------------
  */
-template<typename KeyType, typename ValueType, int PagePerFrame>
+template<typename KeyType, typename ValueType, int PagePerFrame = 1>
 class BPlusTreeLeafFrame : public BPlusTreeFrame {
  public:
   // Delete all constructor / destructor to ensure memory safety
@@ -151,23 +160,31 @@ class BPlusTreeLeafFrame : public BPlusTreeFrame {
   // Helper methods
   auto GetNextPageId() const -> page_id_t { return next_page_id_; }
   void SetNextPageId(page_id_t next_page_id) { next_page_id_ = next_page_id; }
+
+  /**
+   * @return The pointer to the keys array
+   */
+  auto Keys() -> KeyType * { return keys_ - 1; }
+  auto Keys() const -> const KeyType * { return keys_ - 1; }
+  auto Values() -> ValueType * { return values_ - 1; }
+  auto Values() const -> const ValueType * { return values_ - 1; }
   /**
   * @param index The index of the key to get. Index must be non-zero.
   * @return Key at index
   */
-  auto KeyAt(int index) const -> KeyType { return keys_[index]; }
+  auto KeyAt(int index) const -> KeyType { return keys_[index - 1]; }
 
   /**
   * @param index The index of the key to set. Index must be non-zero.
   * @param key The new value for key
   */
-  void SetKeyAt(int index, const KeyType &key) { keys_[index] = key; }
+  void SetKeyAt(int index, const KeyType &key) { keys_[index - 1] = key; }
 
   /**
   * @param index The index to search for
   * @return The value at the index
   */
-  auto ValueAt(int index) const -> ValueType { return values_[index]; }
+  auto ValueAt(int index) const -> ValueType { return values_[index - 1]; }
 
   static constexpr int GetMaxSize() {
     return std::min(
@@ -190,7 +207,21 @@ template<typename KeyType, typename ValueType, int PagePerFrame>
 void BPlusTreeLeafFrame<KeyType, ValueType, PagePerFrame>::Init() {
   BPlusTreeFrame::SetSize(0);
   BPlusTreeFrame::SetFrameType(IndexFrameType::LEAF_FRAME);
+  next_page_id_ = INVALID_PAGE_ID;
 }
+
+/**
+ * The header frame is just used to retrieve the root frame,
+ * preventing potential race condition under concurrent environment.
+ */
+class BPlusTreeHeaderFrame {
+ public:
+  // Delete all constructor / destructor to ensure memory safety
+  BPlusTreeHeaderFrame() = delete;
+  BPlusTreeHeaderFrame(const BPlusTreeHeaderFrame &other) = delete;
+
+  page_id_t root_page_id_;
+};
 
 // instantiate template class
 template

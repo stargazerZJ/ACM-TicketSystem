@@ -3,7 +3,7 @@
 //
 
 #include "buffer_pool_manager.h"
-#include "b_plus_tree_frame.h"
+#include "b_plus_tree.h"
 #include "config.h"
 #include <iostream>
 
