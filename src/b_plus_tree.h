@@ -26,6 +26,8 @@ class BPlusTree {
 
   auto GetValue(const KeyType &key, ValueType *value = nullptr) -> PositionHint;
 
+  auto LowerBound(const KeyType &key, ValueType *value) -> BPlusTree::PositionHint;
+
   auto SetValue(const KeyType &key,
                 const ValueType &value,
                 const PositionHint &hint) -> bool; // insert if not found, return true if inserted
@@ -50,9 +52,9 @@ class BPlusTree {
     int index_{};
   };
 
-  auto Validate() -> bool;
-
-  void Print();
+//  auto Validate() -> bool;
+//
+//  void Print();
 
  private:
   BufferPoolManager<PagesPerFrame> *bpm_;
@@ -61,7 +63,7 @@ class BPlusTree {
   class Context {
    public:
     page_id_t root_page_id_{INVALID_PAGE_ID};
-    std::vector<PositionHint> stack_;
+    sjtu::vector<PositionHint> stack_;
     BasicFrameGuard current_frame_{};
     auto IsRootPage(page_id_t page_id) -> bool { return page_id == root_page_id_; }
   };
@@ -84,12 +86,12 @@ class BPlusTree {
   auto RemoveInLeaf(Context &context) -> void;
   auto RemoveInInternal(Context &context) -> void;
 
-  auto ValidateBPlusTree(page_id_t root_page_id,
-                         page_id_t page_id,
-                         const KeyType &lower_bound,
-                         const KeyType &upper_bound) -> int; // return depth of the tree, throw std::runtime_error if invalid
-
-  void PrintTree(page_id_t page_id, const BPlusTreeFrame *page);
+//  auto ValidateBPlusTree(page_id_t root_page_id,
+//                         page_id_t page_id,
+//                         const KeyType &lower_bound,
+//                         const KeyType &upper_bound) -> int; // return depth of the tree, throw std::runtime_error if invalid
+//
+//  void PrintTree(page_id_t page_id, const BPlusTreeFrame *page);
 };
 
 } // namespace storage
