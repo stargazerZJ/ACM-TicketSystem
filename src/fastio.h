@@ -26,20 +26,24 @@ class FastIO {
   static int READ(char *s) {
     int l = 0;
     char c;
-    while (!std::isprint(c = getchar()));
-    do s[l++] = c; while (std::isprint(c = getchar()));
+    while (!std::isgraph(c = getchar()));
+    do s[l++] = c; while (std::isgraph(c = getchar()));
     return l;
   }
   static void READ(std::string &s) {
+    s.clear();
     int l = 0;
     char c;
-    while (!std::isprint(c = getchar()));
-    do s += c; while (std::isprint(c = getchar()));
+    while (!std::isgraph(c = getchar()));
+    do s += c; while (std::isgraph(c = getchar()));
+  }
+  static void WRITE(char a) {
+    putchar(a);
   }
   static void WRITE(std::integral auto a) {
     if (a < 0) putchar('-'), a = -a;
-    while (a > 9) putchar(a % 10 | '0'), a /= 10;
-    putchar(a | '0');
+    if (a > 9) WRITE(a / 10);
+    putchar(a % 10 + '0');
   }
   static void WRITE(const char *s) {
     while (*s) putchar(*s++);

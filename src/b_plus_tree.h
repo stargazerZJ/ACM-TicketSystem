@@ -20,7 +20,7 @@ class BPlusTree {
   using BasicFrameGuard = BufferPoolManager<PagesPerFrame>::BasicFrameGuard;
   class PositionHint;
 
-  explicit BPlusTree(BufferPoolManager<PagesPerFrame> *bpm, page_id_t header_page_id = INVALID_PAGE_ID);
+  explicit BPlusTree(BufferPoolManager<PagesPerFrame> *bpm, page_id_t &header_page_id);
 
   auto Insert(const KeyType &key, const ValueType &value) -> bool;
 
@@ -44,6 +44,7 @@ class BPlusTree {
 
   class PositionHint {
     friend class BPlusTree<KeyType, ValueType>;
+    friend class Iterator;
    public:
     PositionHint() = default;
     PositionHint(page_id_t page_id, int index) : page_id_(page_id), index_(index) {}
@@ -69,12 +70,15 @@ class BPlusTree {
     }
 
     auto operator++() -> Iterator & {
-      if (Frame()->GetNextPageId() == INVALID_PAGE_ID) {
-        hint_ = {};
-        frame_.Drop();
-      } else {
-        hint_ = {Frame()->GetNextPageId(), 1};
-        frame_ = bpt_->bpm_->FetchFrameBasic(Frame()->GetNextPageId());
+      hint_.index_ ++;
+      if (hint_.index_ > Frame()->GetSize()) {
+        if (Frame()->GetNextPageId() == INVALID_PAGE_ID) {
+          hint_ = {};
+          frame_.Drop();
+        } else {
+          hint_ = {Frame()->GetNextPageId(), 1};
+          frame_ = bpt_->bpm_->FetchFrameBasic(Frame()->GetNextPageId());
+        }
       }
       return *this;
     }

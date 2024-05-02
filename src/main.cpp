@@ -29,7 +29,8 @@ void bpt_test() {
    */
   bool reset = true;
   storage::BufferPoolManager<1> bpm("test", reset);
-  storage::BPlusTree<storage::hash_t, int> bpt(&bpm);
+  storage::page_id_t header_page_id = storage::INVALID_PAGE_ID;
+  storage::BPlusTree<storage::hash_t, int> bpt(&bpm, header_page_id);
   char command;
   storage::hash_t key;
   int value;
@@ -72,21 +73,21 @@ void bpt_test() {
   }
 }
 
-void storage_test() {
+void storage_test(bool force_reset = false) {
   /*
    * Input format (stdin):
    * insert [index] [value]
-   * delete [index]
+   * delete [index] [value]
    * find [index]
    * [index] is a string, and [value] is an integer
    * [index] can duplicate, but pair(index, value) is unique
    */
-  bool reset = false;
-  {
-    std::ifstream file("test.db");
+  bool reset = force_reset;
+  if (!reset) {
+    std::ifstream file("test2.db");
     reset = !file.good();
   }
-  storage::BufferPoolManager<1> bpm("test", reset);
+  storage::BufferPoolManager<1> bpm("test2", reset);
   int &bpt_header = bpm.getInfo(1);
   if (reset) {
     bpt_header = storage::INVALID_PAGE_ID;
@@ -105,12 +106,14 @@ void storage_test() {
       IO::read(value);
       bpt.Insert(std::make_pair(key_hash, value), 'a');
     } else if (cmd == "delete") {
-      bpt.RemoveAll(key_hash);
+      int value;
+      IO::read(value);
+      bpt.Remove(std::make_pair(key_hash, value));
     } else if (cmd == "find") {
       char value = 'a';
       auto result = bpt.PartialSearch(key_hash);
       for (const auto &item : result) {
-        IO::write(item.second, ' ');
+        IO::write(item.first.second, ' ');
       }
       if (result.empty()) IO::write("null");
       IO::write('\n');
@@ -121,5 +124,6 @@ void storage_test() {
 }
 
 int main() {
+  storage_test(false);
   return 0;
 }
