@@ -76,11 +76,17 @@ void bpt_test() {
 void storage_test(bool force_reset = false) {
   /*
    * Input format (stdin):
+   * first is the number of operations n
+   * then n lines of operations, each line is in the format of
    * insert [index] [value]
    * delete [index] [value]
    * find [index]
    * [index] is a string, and [value] is an integer
    * [index] can duplicate, but pair(index, value) is unique
+   * Output format (stdout):
+   * `insert` and `delete` do not output anything
+   * `find` outputs all values with the same index in a line, separated by space
+   * if no value is found, output "null"
    */
   bool reset = force_reset;
   if (!reset) {
