@@ -109,7 +109,7 @@ auto BPlusTree<KeyType, ValueType>::GetValue(const KeyType &key, ValueType *valu
     } else {
       auto current_frame = current_frame_guard.template As<LeafFrame>();
       auto index = KeyIndex(key, current_frame) - 1;
-      if (index <= current_frame->GetSize() && current_frame->KeyAt(index) == key) {
+      if (0 < index && index <= current_frame->GetSize() && current_frame->KeyAt(index) == key) {
         if (value) *value = current_frame->ValueAt(index);
         return {current_page_id, index};
       } else {
@@ -119,29 +119,21 @@ auto BPlusTree<KeyType, ValueType>::GetValue(const KeyType &key, ValueType *valu
   } while (true);
 }
 template<typename KeyType, typename ValueType>
-auto BPlusTree<KeyType, ValueType>::LowerBound(const KeyType &key, ValueType *value) -> BPlusTree::PositionHint {
-  auto current_page_id = GetRootId();
-  if (current_page_id == INVALID_PAGE_ID) {
+auto BPlusTree<KeyType, ValueType>::LowerBound(const KeyType &key) -> BPlusTree::PositionHint {
+  auto ctx = FindLeafFrame(key);
+  if (ctx.stack_.empty()) {
     return {};
   }
-  do {
-    auto current_frame_guard = bpm_->FetchFrameBasic(current_page_id);
-    bool is_leaf = current_frame_guard.template As<BPlusTreeFrame>()->IsLeafFrame();
-    if (!is_leaf) {
-      auto current_frame = current_frame_guard.template As<InternalFrame>();
-      auto index = KeyIndex(key, current_frame) - 1;
-      current_page_id = current_frame->ValueAt(index);
-    } else {
-      auto current_frame = current_frame_guard.template As<LeafFrame>();
-      auto index = KeyIndex(key, current_frame) - 1;
-      if (index <= current_frame->GetSize()) {
-        if (value) *value = current_frame->ValueAt(index);
-        return {current_page_id, index};
-      } else {
-        return {current_frame->GetNextPageId(), 1};
-      }
-    }
-  } while (true);
+  auto leaf = ctx.current_frame_.template As<LeafFrame>();
+  auto index = ctx.stack_.back().Index();
+  if (0 < index && index <= leaf->GetSize() && leaf->KeyAt(index) == key) {
+    return ctx.stack_.back();
+  }
+  if (index < leaf->GetSize()) {
+    return {ctx.stack_.back().PageId(), index + 1};
+  } else {
+    return {leaf->GetNextPageId(), 1};
+  }
 }
 template<typename KeyType, typename ValueType>
 auto BPlusTree<KeyType, ValueType>::GetRootId() -> page_id_t {
@@ -460,142 +452,142 @@ auto BPlusTree<KeyType, ValueType>::SetValue(const KeyType &key, const ValueType
   leaf->SetValueAt(hint.Index(), value);
   return false;
 }
-//template<typename KeyType, typename ValueType>
-//auto BPlusTree<KeyType, ValueType>::ValidateBPlusTree(page_id_t root_page_id,
-//                                                      page_id_t page_id,
-//                                                      const KeyType &lower_bound,
-//                                                      const KeyType &upper_bound) -> int {
-//  if (page_id < 1) {
-//    throw std::runtime_error("Invalid page id");
-//  }
-//  auto frame_guard = bpm_->FetchFrameBasic(page_id);
-//  bool is_leaf = frame_guard.template As<BPlusTreeFrame>()->IsLeafFrame();
-//  if (is_leaf) {
-//    auto leaf = frame_guard.template As<LeafFrame>();
-//    if (page_id == root_page_id) {
-//      if (leaf->GetSize() == 0) {
-//        throw std::runtime_error("Root page size is 0");
-//      }
-//    } else {
-//      if (leaf->GetSize() < LeafFrame::GetMinSize()) {
-//        throw std::runtime_error("Leaf frame size too small");
-//      }
-//    }
-//    if (leaf->GetSize() > LeafFrame::GetMaxSize()) {
-//      throw std::runtime_error("Leaf frame size too large");
-//    }
-//    if (leaf->KeyAt(1) < lower_bound || leaf->KeyAt(leaf->GetSize()) >= upper_bound) {
-//      throw std::runtime_error("Leaf frame key out of range");
-//    }
-//    for (int i = 1; i <= leaf->GetSize(); i++) {
-//      if (i > 1 && leaf->KeyAt(i) <= leaf->KeyAt(i - 1)) {
-//        throw std::runtime_error("Leaf frame key not in order");
-//      }
-//    }
-//    return 1;
-//  } else {
-//    auto internal = frame_guard.template As<InternalFrame>();
-//    if (page_id == root_page_id) {
-//      if (internal->GetSize() == 0) {
-//        throw std::runtime_error("Root page size is 0");
-//      }
-//    } else {
-//      if (internal->GetSize() < InternalFrame::GetMinSize()) {
-//        throw std::runtime_error("Internal frame size too small");
-//      }
-//    }
-//    if (internal->GetSize() > InternalFrame::GetMaxSize()) {
-//      throw std::runtime_error("Internal frame size too large");
-//    }
-//    if (internal->KeyAt(1) < lower_bound || internal->KeyAt(internal->GetSize()) >= upper_bound) {
-//      throw std::runtime_error("Internal frame key out of range");
-//    }
-//    int depth = 0;
-//    for (int i = 0; i <= internal->GetSize(); i++) {
-//      if (i > 1 && internal->KeyAt(i) <= internal->KeyAt(i - 1)) {
-//        throw std::runtime_error("Internal frame key not in order");
-//      }
-//      auto child_depth = ValidateBPlusTree(root_page_id,
-//                                           internal->ValueAt(i),
-//                                           i == 0 ? lower_bound : internal->KeyAt(i),
-//                                           i == internal->GetSize() ? upper_bound : internal->KeyAt(i + 1));
-//      if (i == 0) {
-//        depth = child_depth;
-//      } else if (child_depth != depth) {
-//        throw std::runtime_error("Internal frame child depth not consistent");
-//      }
-//    }
-//    return depth + 1;
-//  }
-//}
-//template<typename KeyType, typename ValueType>
-//auto BPlusTree<KeyType, ValueType>::Validate() -> bool {
-//  auto root_page_id = GetRootId();
-//  if (root_page_id == INVALID_PAGE_ID) {
-//    return true;
-//  }
-//  try {
-//    ValidateBPlusTree(root_page_id, root_page_id, KeyType(), std::numeric_limits<KeyType>::max());
-//  } catch (std::runtime_error &e) {
-//    std::cerr << "Error: " << e.what() << "\n";
-//    return false;
-//  }
-//  return true;
-//}
-//template<typename KeyType, typename ValueType>
-//void BPlusTree<KeyType, ValueType>::Print() {
-//  auto root_page_id = GetRootId();
-//  if (root_page_id == INVALID_PAGE_ID) return;
-//  auto guard = bpm_->FetchFrameBasic(root_page_id);
-//  PrintTree(guard.PageId(), guard.template As<BPlusTreeFrame>());
-//}
-//template<typename KeyType, typename ValueType>
-//void BPlusTree<KeyType, ValueType>::PrintTree(page_id_t page_id, const BPlusTreeFrame *page) {
-//  if (page_id < 1) return ;
-//  if (page->IsLeafFrame()) {
-//    auto *leaf = reinterpret_cast<const LeafFrame *>(page);
-//    std::cout << "Leaf Page: " << page_id << "\tNext: " << leaf->GetNextPageId() << std::endl;
-//
-//    // Print the contents of the leaf page.
-//    std::cout << "Contents: ";
-//    for (int i = 1; i <= leaf->GetSize(); i++) {
-//      std::cout << leaf->KeyAt(i);
-//      if ((i + 1) <= leaf->GetSize()) {
-//        std::cout << ", ";
-//      }
-//    }
-//    std::cout << std::endl;
-//    std::cout << std::endl;
-//
-//  } else {
-//    auto *internal = reinterpret_cast<const InternalFrame *>(page);
-//    std::cout << "Internal Page: " << page_id << std::endl;
-//
-//    // Print the contents of the internal page.
-//    std::cout << "Contents: ";
-//    for (int i = 0; i <= internal->GetSize(); i++) {
-//      if (i > 0) {
-//        std::cout << internal->KeyAt(i) << ": " << internal->ValueAt(i);
-//      } else {
-//        std::cout << "<null>: " << internal->ValueAt(i);
-//      }
-//      if ((i + 1) <= internal->GetSize()) {
-//        std::cout << ", ";
-//      }
-//    }
-//    std::cout << std::endl;
-//    std::cout << std::endl;
-//
-//    for (int i = 0; i <= internal->GetSize(); i++) {
-//      auto guard = bpm_->FetchFrameBasic(internal->ValueAt(i));
-//      PrintTree(internal->ValueAt(i), guard.template As<BPlusTreeFrame>());
-//    }
-//  }
-//}
+template<typename KeyType, typename ValueType>
+auto BPlusTree<KeyType, ValueType>::ValidateBPlusTree(page_id_t root_page_id,
+                                                      page_id_t page_id,
+                                                      const KeyType &lower_bound,
+                                                      const KeyType &upper_bound) -> int {
+  if (page_id < 1) {
+    throw std::runtime_error("Invalid page id");
+  }
+  auto frame_guard = bpm_->FetchFrameBasic(page_id);
+  bool is_leaf = frame_guard.template As<BPlusTreeFrame>()->IsLeafFrame();
+  if (is_leaf) {
+    auto leaf = frame_guard.template As<LeafFrame>();
+    if (page_id == root_page_id) {
+      if (leaf->GetSize() == 0) {
+        throw std::runtime_error("Root page size is 0");
+      }
+    } else {
+      if (leaf->GetSize() < LeafFrame::GetMinSize()) {
+        throw std::runtime_error("Leaf frame size too small");
+      }
+    }
+    if (leaf->GetSize() > LeafFrame::GetMaxSize()) {
+      throw std::runtime_error("Leaf frame size too large");
+    }
+    if (leaf->KeyAt(1) < lower_bound || leaf->KeyAt(leaf->GetSize()) >= upper_bound) {
+      throw std::runtime_error("Leaf frame key out of range");
+    }
+    for (int i = 1; i <= leaf->GetSize(); i++) {
+      if (i > 1 && leaf->KeyAt(i) <= leaf->KeyAt(i - 1)) {
+        throw std::runtime_error("Leaf frame key not in order");
+      }
+    }
+    return 1;
+  } else {
+    auto internal = frame_guard.template As<InternalFrame>();
+    if (page_id == root_page_id) {
+      if (internal->GetSize() == 0) {
+        throw std::runtime_error("Root page size is 0");
+      }
+    } else {
+      if (internal->GetSize() < InternalFrame::GetMinSize()) {
+        throw std::runtime_error("Internal frame size too small");
+      }
+    }
+    if (internal->GetSize() > InternalFrame::GetMaxSize()) {
+      throw std::runtime_error("Internal frame size too large");
+    }
+    if (internal->KeyAt(1) < lower_bound || internal->KeyAt(internal->GetSize()) >= upper_bound) {
+      throw std::runtime_error("Internal frame key out of range");
+    }
+    int depth = 0;
+    for (int i = 0; i <= internal->GetSize(); i++) {
+      if (i > 1 && internal->KeyAt(i) <= internal->KeyAt(i - 1)) {
+        throw std::runtime_error("Internal frame key not in order");
+      }
+      auto child_depth = ValidateBPlusTree(root_page_id,
+                                           internal->ValueAt(i),
+                                           i == 0 ? lower_bound : internal->KeyAt(i),
+                                           i == internal->GetSize() ? upper_bound : internal->KeyAt(i + 1));
+      if (i == 0) {
+        depth = child_depth;
+      } else if (child_depth != depth) {
+        throw std::runtime_error("Internal frame child depth not consistent");
+      }
+    }
+    return depth + 1;
+  }
+}
+template<typename KeyType, typename ValueType>
+auto BPlusTree<KeyType, ValueType>::Validate() -> bool {
+  auto root_page_id = GetRootId();
+  if (root_page_id == INVALID_PAGE_ID) {
+    return true;
+  }
+  try {
+    ValidateBPlusTree(root_page_id, root_page_id, KeyType(), std::numeric_limits<KeyType>::max());
+  } catch (std::runtime_error &e) {
+    std::cerr << "Error: " << e.what() << "\n";
+    return false;
+  }
+  return true;
+}
+template<typename KeyType, typename ValueType>
+void BPlusTree<KeyType, ValueType>::Print() {
+  auto root_page_id = GetRootId();
+  if (root_page_id == INVALID_PAGE_ID) return;
+  auto guard = bpm_->FetchFrameBasic(root_page_id);
+  PrintTree(guard.PageId(), guard.template As<BPlusTreeFrame>());
+}
+template<typename KeyType, typename ValueType>
+void BPlusTree<KeyType, ValueType>::PrintTree(page_id_t page_id, const BPlusTreeFrame *page) {
+  if (page_id < 1) return ;
+  if (page->IsLeafFrame()) {
+    auto *leaf = reinterpret_cast<const LeafFrame *>(page);
+    std::cout << "Leaf Page: " << page_id << "\tNext: " << leaf->GetNextPageId() << std::endl;
 
-template
-class storage::BPlusTree<hash_t, int>;
+    // Print the contents of the leaf page.
+    std::cout << "Contents: ";
+    for (int i = 1; i <= leaf->GetSize(); i++) {
+      std::cout << leaf->KeyAt(i);
+      if ((i + 1) <= leaf->GetSize()) {
+        std::cout << ", ";
+      }
+    }
+    std::cout << std::endl;
+    std::cout << std::endl;
 
-template
-class storage::BPlusTree<std::pair<hash_t, int>, int>;
+  } else {
+    auto *internal = reinterpret_cast<const InternalFrame *>(page);
+    std::cout << "Internal Page: " << page_id << std::endl;
+
+    // Print the contents of the internal page.
+    std::cout << "Contents: ";
+    for (int i = 0; i <= internal->GetSize(); i++) {
+      if (i > 0) {
+        std::cout << internal->KeyAt(i) << ": " << internal->ValueAt(i);
+      } else {
+        std::cout << "<null>: " << internal->ValueAt(i);
+      }
+      if ((i + 1) <= internal->GetSize()) {
+        std::cout << ", ";
+      }
+    }
+    std::cout << std::endl;
+    std::cout << std::endl;
+
+    for (int i = 0; i <= internal->GetSize(); i++) {
+      auto guard = bpm_->FetchFrameBasic(internal->ValueAt(i));
+      PrintTree(internal->ValueAt(i), guard.template As<BPlusTreeFrame>());
+    }
+  }
+}
+
+//template
+//class storage::BPlusTree<hash_t, int>;
+//
+//template
+//class storage::BPlusTree<std::pair<hash_t, int>, int>;
 }

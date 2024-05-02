@@ -26,7 +26,7 @@ class BPlusTree {
 
   auto GetValue(const KeyType &key, ValueType *value = nullptr) -> PositionHint;
 
-  auto LowerBound(const KeyType &key, ValueType *value) -> BPlusTree::PositionHint;
+  auto LowerBound(const KeyType &key) -> BPlusTree::PositionHint;
 
   auto SetValue(const KeyType &key,
                 const ValueType &value,
@@ -52,9 +52,39 @@ class BPlusTree {
     int index_{};
   };
 
-//  auto Validate() -> bool;
-//
-//  void Print();
+  class Iterator {
+    friend class BPlusTree<KeyType, ValueType>;
+   public:
+    Iterator() = default;
+    Iterator(const BPlusTree<KeyType, ValueType> *bpt, const PositionHint &hint) : bpt_(bpt), hint_(hint) {}
+
+    auto operator++() -> Iterator & {
+      if (Frame()->NextLeafPageId() == INVALID_PAGE_ID) {
+        hint_ = {};
+      } else {
+        hint_ = {Frame()->NextLeafPageId(), 1};
+        frame_ = bpt_->bpm_->FetchPage(Frame()->NextLeafPageId());
+      }
+      return *this;
+    }
+    auto operator*() -> std::pair<KeyType, ValueType> {
+      return {Frame()->Key(hint_.Index()), Frame()->Value(hint_.Index())};
+    }
+    auto SetValue(const ValueType &value) -> void { FrameMut()->SetValue(hint_.Index(), value); }
+
+    auto operator==(const Iterator &other) const -> bool { return bpt_ == other.bpt_ && hint_ == other.hint_; }
+    auto operator!=(const Iterator &other) const -> bool { return !(*this == other); }
+   private:
+    const BPlusTree<KeyType, ValueType> *bpt_{};
+    PositionHint hint_{};
+    BasicFrameGuard frame_{};
+    auto Frame() const -> const LeafFrame * { return frame_.template As<LeafFrame>(); }
+    auto FrameMut() -> LeafFrame * { return frame_.template AsMut<LeafFrame>(); }
+  };
+
+  auto Validate() -> bool;
+
+  void Print();
 
  private:
   BufferPoolManager<PagesPerFrame> *bpm_;
@@ -86,12 +116,14 @@ class BPlusTree {
   auto RemoveInLeaf(Context &context) -> void;
   auto RemoveInInternal(Context &context) -> void;
 
-//  auto ValidateBPlusTree(page_id_t root_page_id,
-//                         page_id_t page_id,
-//                         const KeyType &lower_bound,
-//                         const KeyType &upper_bound) -> int; // return depth of the tree, throw std::runtime_error if invalid
-//
-//  void PrintTree(page_id_t page_id, const BPlusTreeFrame *page);
+  auto ValidateBPlusTree(page_id_t root_page_id,
+                         page_id_t page_id,
+                         const KeyType &lower_bound,
+                         const KeyType &upper_bound) -> int; // return depth of the tree, throw std::runtime_error if invalid
+
+  void PrintTree(page_id_t page_id, const BPlusTreeFrame *page);
 };
 
 } // namespace storage
+
+#include "b_plus_tree.cpp"

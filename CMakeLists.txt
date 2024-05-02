@@ -17,4 +17,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g")
 file(GLOB_RECURSE main_src src/*.cpp )
 file(GLOB_RECURSE third_party_src third_party//*.cpp )
 
+list(REMOVE_ITEM main_src "${CMAKE_CURRENT_SOURCE_DIR}/src/b_plus_tree.cpp")
+
 add_executable(code ${main_src} ${third_party_src})
