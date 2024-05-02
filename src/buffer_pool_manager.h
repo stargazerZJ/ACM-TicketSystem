@@ -68,12 +68,13 @@ class BufferPoolManager<1> {
 
     auto PageId() -> page_id_t { return frame_->GetPageId(); }
     auto GetData() -> char * { return frame_->GetData(); }
+    auto GetData() const -> const char * { return frame_->GetData(); }
     auto GetDataMut() -> char * {
       frame_->is_dirty_ = true;
       return frame_->GetData();
     }
     template<class T>
-    auto As() -> const T * {
+    auto As() const -> const T * {
       return reinterpret_cast<const T *>(GetData());
     }
     template<class T>
@@ -101,6 +102,8 @@ class BufferPoolManager<1> {
   };
   auto NewFrameGuarded(page_id_t *page_id = nullptr) -> BasicFrameGuard;
   auto FetchFrameBasic(page_id_t page_id) -> BasicFrameGuard;
+
+  int &getInfo(unsigned int n) { return pages_.getInfo(n); }
 
  private:
   external_memory::Pages pages_;

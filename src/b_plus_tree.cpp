@@ -454,13 +454,13 @@ auto BPlusTree<KeyType, ValueType>::SetValue(const KeyType &key, const ValueType
 }
 template<typename KeyType, typename ValueType>
 auto BPlusTree<KeyType, ValueType>::PartialSearch(const auto &key) -> std::vector<std::pair<KeyType, ValueType>> {
-  using KeyTypeFirst = decltype(KeyType().first());
-  using KeyTypeSecond = decltype(KeyType().second());
-  static_assert(std::is_same_v<decltype(key), KeyTypeFirst>);
+  using KeyTypeFirst = KeyType::first_type;
+  using KeyTypeSecond = KeyType::second_type;
+  static_assert(std::is_same_v<decltype(key), const KeyTypeFirst &>);
   std::vector<std::pair<KeyType, ValueType>> result;
   auto pos = LowerBound(KeyType(key, std::numeric_limits<KeyTypeSecond>::min()));
   auto it = Iterator(this, pos);
-  while (it != End() && it.Key().first() == key) {
+  while (it != End() && it.Key().first == key) {
     result.emplace_back(it.Key(), it.Value());
     ++it;
   }
@@ -470,7 +470,7 @@ template<typename KeyType, typename ValueType>
 auto BPlusTree<KeyType, ValueType>::RemoveAll(const auto &key) -> void {
   auto toDelete = PartialSearch(key);
   for (auto &pair : toDelete) {
-    Remove(pair.first());
+    Remove(pair.first);
   }
 }
 template<typename KeyType, typename ValueType>

@@ -69,12 +69,12 @@ class BPlusTree {
     }
 
     auto operator++() -> Iterator & {
-      if (Frame()->NextLeafPageId() == INVALID_PAGE_ID) {
+      if (Frame()->GetNextPageId() == INVALID_PAGE_ID) {
         hint_ = {};
         frame_.Drop();
       } else {
         hint_ = {Frame()->GetNextPageId(), 1};
-        frame_ = bpt_->bpm_->FetchFrameBasic(Frame()->NextLeafPageId());
+        frame_ = bpt_->bpm_->FetchFrameBasic(Frame()->GetNextPageId());
       }
       return *this;
     }
@@ -82,8 +82,8 @@ class BPlusTree {
       return {Frame()->Key(hint_.Index()), Frame()->Value(hint_.Index())};
     }
     auto SetValue(const ValueType &value) -> void { FrameMut()->SetValue(hint_.Index(), value); }
-    auto Key() const -> KeyType { return Frame()->Key(hint_.Index()); }
-    auto Value() const -> ValueType { return Frame()->Value(hint_.Index()); }
+    auto Key() const -> KeyType { return Frame()->KeyAt(hint_.Index()); }
+    auto Value() const -> ValueType { return Frame()->ValueAt(hint_.Index()); }
 
     auto operator==(const Iterator &other) const -> bool { return bpt_ == other.bpt_ && hint_ == other.hint_; }
     auto operator!=(const Iterator &other) const -> bool { return !(*this == other); }
