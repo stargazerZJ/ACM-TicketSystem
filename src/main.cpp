@@ -6,6 +6,8 @@
 #include "b_plus_tree.h"
 #include "config.h"
 #include <iostream>
+#include "fastio.h"
+#include "hash.h"
 
 void bpt_frame_test() {
   using internal_frame = storage::BPlusTreeInternalFrame<storage::hash_t, storage::page_id_t, 1>;
@@ -17,7 +19,7 @@ void bpt_frame_test() {
   std::cout << "Size of BPlusTreeLeafFrame<char, char, 1>: " << sizeof(leaf_frame2) << std::endl;
 }
 
-void bpt_test(storage::BufferPoolManager<1> &bpm) {
+void bpt_test() {
   /*
    * Input format (stdin):
    * <command> <key> <value>
@@ -25,6 +27,8 @@ void bpt_test(storage::BufferPoolManager<1> &bpm) {
    * <key>: uint64_t
    * <value>: int
    */
+  bool reset = true;
+  storage::BufferPoolManager<1> bpm("test", reset);
   storage::BPlusTree<storage::hash_t, int> bpt(&bpm);
   char command;
   storage::hash_t key;
@@ -68,9 +72,54 @@ void bpt_test(storage::BufferPoolManager<1> &bpm) {
   }
 }
 
-int main() {
-  bool reset = true;
+void storage_test() {
+  /*
+   * Input format (stdin):
+   * insert [index] [value]
+   * delete [index]
+   * find [index]
+   * [index] is a string, and [value] is an integer
+   * [index] can duplicate, but pair(index, value) is unique
+   */
+  bool reset = false;
+  {
+    std::ifstream file("test.db");
+    reset = !file.good();
+  }
   storage::BufferPoolManager<1> bpm("test", reset);
-  bpt_test(bpm);
+  int &bpt_header = bpm.getInfo(1);
+  if (reset) {
+    bpt_header = storage::INVALID_PAGE_ID;
+  }
+  storage::BPlusTree<std::pair<storage::hash_t, int>, char> bpt(&bpm, bpt_header);
+  storage::Hash hash;
+  int n;
+  using IO = fastio::FastIO;
+  IO::read(n);
+  for (int i = 0; i < n; ++i) {
+    std::string cmd, key_str;
+    IO::read(cmd, key_str);
+    auto key_hash = hash(key_str);
+    if (cmd == "insert") {
+      int value;
+      IO::read(value);
+      bpt.Insert(std::make_pair(key_hash, value), 'a');
+    } else if (cmd == "delete") {
+      bpt.RemoveAll(key_hash);
+    } else if (cmd == "find") {
+      char value = 'a';
+      auto result = bpt.PartialSearch(key_hash);
+      for (const auto &item : result) {
+        IO::write(item.second, ' ');
+      }
+      if (result.empty()) IO::write("null");
+      IO::write('\n');
+    } else {
+      IO::write("Unknown command: ", cmd, '\n');
+    }
+  }
+}
+
+int main() {
   return 0;
 }
