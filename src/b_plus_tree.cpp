@@ -10,6 +10,8 @@ namespace storage {
 template<typename KeyType, typename ValueType>
 BPlusTree<KeyType, ValueType>::BPlusTree(BufferPoolManager<PagesPerFrame> *bpm, page_id_t &header_page_id)
     : bpm_(bpm), header_page_id_(header_page_id) {
+  static_assert(sizeof(InternalFrame) <= Frame<PagesPerFrame>::kFrameSize);
+  static_assert(sizeof(LeafFrame) <= Frame<PagesPerFrame>::kFrameSize);
   if (header_page_id_ == INVALID_PAGE_ID) {
     auto header_frame_guard = bpm->NewFrameGuarded(&header_page_id_);
     auto header_frame = header_frame_guard.template AsMut<BPlusTreeHeaderFrame>();
