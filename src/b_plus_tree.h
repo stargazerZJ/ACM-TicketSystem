@@ -1,3 +1,5 @@
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "Simplify"
 //
 // Created by zj on 4/28/2024.
 //
@@ -28,6 +30,10 @@ class BPlusTree {
 
   auto LowerBound(const KeyType &key) -> BPlusTree::PositionHint;
 
+  auto PartialSearch(const auto &key) -> std::vector<std::pair<KeyType, ValueType>>;
+
+  auto RemoveAll(const auto &key) -> void;
+
   auto SetValue(const KeyType &key,
                 const ValueType &value,
                 const PositionHint &hint) -> bool; // insert if not found, return true if inserted
@@ -56,14 +62,19 @@ class BPlusTree {
     friend class BPlusTree<KeyType, ValueType>;
    public:
     Iterator() = default;
-    Iterator(const BPlusTree<KeyType, ValueType> *bpt, const PositionHint &hint) : bpt_(bpt), hint_(hint) {}
+    Iterator(const BPlusTree<KeyType, ValueType> *bpt, const PositionHint &hint) : bpt_(bpt), hint_(hint) {
+      if (hint.found()) {
+        frame_ = bpt_->bpm_->FetchFrameBasic(hint_.PageId());
+      }
+    }
 
     auto operator++() -> Iterator & {
       if (Frame()->NextLeafPageId() == INVALID_PAGE_ID) {
         hint_ = {};
+        frame_.Drop();
       } else {
-        hint_ = {Frame()->NextLeafPageId(), 1};
-        frame_ = bpt_->bpm_->FetchPage(Frame()->NextLeafPageId());
+        hint_ = {Frame()->GetNextPageId(), 1};
+        frame_ = bpt_->bpm_->FetchFrameBasic(Frame()->NextLeafPageId());
       }
       return *this;
     }
@@ -71,6 +82,8 @@ class BPlusTree {
       return {Frame()->Key(hint_.Index()), Frame()->Value(hint_.Index())};
     }
     auto SetValue(const ValueType &value) -> void { FrameMut()->SetValue(hint_.Index(), value); }
+    auto Key() const -> KeyType { return Frame()->Key(hint_.Index()); }
+    auto Value() const -> ValueType { return Frame()->Value(hint_.Index()); }
 
     auto operator==(const Iterator &other) const -> bool { return bpt_ == other.bpt_ && hint_ == other.hint_; }
     auto operator!=(const Iterator &other) const -> bool { return !(*this == other); }
@@ -81,6 +94,8 @@ class BPlusTree {
     auto Frame() const -> const LeafFrame * { return frame_.template As<LeafFrame>(); }
     auto FrameMut() -> LeafFrame * { return frame_.template AsMut<LeafFrame>(); }
   };
+
+  auto End() -> Iterator { return Iterator(this, {}); }
 
   auto Validate() -> bool;
 
@@ -127,3 +142,4 @@ class BPlusTree {
 } // namespace storage
 
 #include "b_plus_tree.cpp"
+#pragma clang diagnostic pop

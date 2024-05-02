@@ -57,14 +57,14 @@ void bpt_test(storage::BufferPoolManager<1> &bpm) {
       }
       default:std::cerr << "Unknown command: " << command << std::endl;
     }
-//    if (command != 'F' && i % 100 == 0) {
-////      std::cerr << "Print B+ tree after operation " << i << ": " << command << " " << key << std::endl;
-////      bpt.Print();
-//      if (!bpt.Validate()) {
-//        std::cerr << "Validation failed after " << i << " operations" << std::endl;
-//        break;
-//      }
-//    }
+    if (command != 'F' && i % 100 == 0) {
+//      std::cerr << "Print B+ tree after operation " << i << ": " << command << " " << key << std::endl;
+//      bpt.Print();
+      if (!bpt.Validate()) {
+        std::cerr << "Validation failed after " << i << " operations" << std::endl;
+        break;
+      }
+    }
   }
 }
 

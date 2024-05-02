@@ -453,6 +453,27 @@ auto BPlusTree<KeyType, ValueType>::SetValue(const KeyType &key, const ValueType
   return false;
 }
 template<typename KeyType, typename ValueType>
+auto BPlusTree<KeyType, ValueType>::PartialSearch(const auto &key) -> std::vector<std::pair<KeyType, ValueType>> {
+  using KeyTypeFirst = decltype(KeyType().first());
+  using KeyTypeSecond = decltype(KeyType().second());
+  static_assert(std::is_same_v<decltype(key), KeyTypeFirst>);
+  std::vector<std::pair<KeyType, ValueType>> result;
+  auto pos = LowerBound(KeyType(key, std::numeric_limits<KeyTypeSecond>::min()));
+  auto it = Iterator(this, pos);
+  while (it != End() && it.Key().first() == key) {
+    result.emplace_back(it.Key(), it.Value());
+    ++it;
+  }
+  return result;
+}
+template<typename KeyType, typename ValueType>
+auto BPlusTree<KeyType, ValueType>::RemoveAll(const auto &key) -> void {
+  auto toDelete = PartialSearch(key);
+  for (auto &pair : toDelete) {
+    Remove(pair.first());
+  }
+}
+template<typename KeyType, typename ValueType>
 auto BPlusTree<KeyType, ValueType>::ValidateBPlusTree(page_id_t root_page_id,
                                                       page_id_t page_id,
                                                       const KeyType &lower_bound,
@@ -543,7 +564,7 @@ void BPlusTree<KeyType, ValueType>::Print() {
 }
 template<typename KeyType, typename ValueType>
 void BPlusTree<KeyType, ValueType>::PrintTree(page_id_t page_id, const BPlusTreeFrame *page) {
-  if (page_id < 1) return ;
+  if (page_id < 1) return;
   if (page->IsLeafFrame()) {
     auto *leaf = reinterpret_cast<const LeafFrame *>(page);
     std::cout << "Leaf Page: " << page_id << "\tNext: " << leaf->GetNextPageId() << std::endl;
