@@ -63,7 +63,7 @@ auto BPlusTree<KeyType, ValueType>::Insert(const KeyType &key, const ValueType &
     }
     size_t move_count = (leaf->GetSize() - split_index);
     std::memcpy(new_leaf->Keys() + 1, leaf->Keys() + split_index + 1, move_count * sizeof(KeyType));
-    std::memcpy(new_leaf->Values() + 1, leaf->Values() + split_index + 1, move_count * sizeof(KeyType));
+    std::memcpy(new_leaf->Values() + 1, leaf->Values() + split_index + 1, move_count * sizeof(ValueType));
     new_leaf->SetSize(move_count);
     leaf->SetSize(split_index);
     new_leaf->SetNextPageId(leaf->GetNextPageId());
