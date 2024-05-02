@@ -11,8 +11,9 @@ include_directories(src)
 include_directories(third_party)
 
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g")
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -march=native")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -march=native")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address,undefined,leak")
 
 file(GLOB_RECURSE main_src src/*.cpp )
 file(GLOB_RECURSE third_party_src third_party//*.cpp )
