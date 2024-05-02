@@ -133,7 +133,11 @@ auto BPlusTree<KeyType, ValueType>::LowerBound(const KeyType &key) -> BPlusTree:
   if (index < leaf->GetSize()) {
     return {ctx.stack_.back().PageId(), index + 1};
   } else {
-    return {leaf->GetNextPageId(), 1};
+    if (leaf->GetNextPageId() == INVALID_PAGE_ID) {
+      return {};
+    } else {
+      return {leaf->GetNextPageId(), 1};
+    }
   }
 }
 template<typename KeyType, typename ValueType>
