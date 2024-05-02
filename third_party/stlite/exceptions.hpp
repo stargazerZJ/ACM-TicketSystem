@@ -8,7 +8,7 @@
 
 namespace sjtu {
 
- class exception : public std::runtime_error {
+ class exception : public std::exception {
 //protected:
 //	const std::string variant = "";
 //	std::string detail = "";
@@ -35,6 +35,13 @@ class invalid_iterator : public exception {
 class container_is_empty : public exception {
 	/* __________________________ */
 };
+
+//using exception = std::runtime_error;
+//using index_out_of_bound = exception;
+//using runtime_error = exception;
+//using invalid_iterator = exception;
+//using container_is_empty = exception;
+
 }
 
 #endif

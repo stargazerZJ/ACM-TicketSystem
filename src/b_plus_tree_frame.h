@@ -102,6 +102,7 @@ class BPlusTreeInternalFrame : public BPlusTreeFrame {
    * @return The value at the index
    */
   auto ValueAt(int index) const -> ValueType { return values_[index]; }
+  void SetValueAt(int index, const ValueType &value) { values_[index] = value; }
 
   static constexpr int GetMaxSize() {
     return std::min(
@@ -185,6 +186,7 @@ class BPlusTreeLeafFrame : public BPlusTreeFrame {
   * @return The value at the index
   */
   auto ValueAt(int index) const -> ValueType { return values_[index - 1]; }
+  void SetValueAt(int index, const ValueType &value) { values_[index - 1] = value; }
 
   static constexpr int GetMaxSize() {
     return std::min(
