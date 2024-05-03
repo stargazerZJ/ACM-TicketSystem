@@ -8,6 +8,7 @@
 #include <iostream>
 #include "fastio.h"
 #include "hash.h"
+#include "utility.h"
 
 void bpt_frame_test() {
   using internal_frame = storage::BPlusTreeInternalFrame<storage::hash_t, storage::page_id_t, 1>;
@@ -98,7 +99,7 @@ void storage_test(bool force_reset = false) {
   if (reset) {
     bpt_header = storage::INVALID_PAGE_ID;
   }
-  storage::BPlusTree<std::pair<storage::hash_t, int>, char> bpt(&bpm, bpt_header);
+  storage::BPlusTree<storage::PackedPair<storage::hash_t, int>, char> bpt(&bpm, bpt_header);
   storage::Hash hash;
   int n;
   using IO = fastio::FastIO;
@@ -110,11 +111,11 @@ void storage_test(bool force_reset = false) {
     if (cmd == "insert") {
       int value;
       IO::read(value);
-      bpt.Insert(std::make_pair(key_hash, value), 'a');
+      bpt.Insert({key_hash, value}, 'a');
     } else if (cmd == "delete") {
       int value;
       IO::read(value);
-      bpt.Remove(std::make_pair(key_hash, value));
+      bpt.Remove({key_hash, value});
     } else if (cmd == "find") {
       char value = 'a';
       auto result = bpt.PartialSearch(key_hash);
@@ -127,6 +128,11 @@ void storage_test(bool force_reset = false) {
       IO::write("Unknown command: ", cmd, '\n');
     }
   }
+}
+
+void pair_test() {
+//  std::cout << "Size of TrivialPair: " << sizeof (TrivialPair) << std::endl; // 16
+  std::cout << "Size of PackedPair: " << sizeof (storage::PackedPair<storage::hash_t, int>) << std::endl; // 12
 }
 
 int main() {
