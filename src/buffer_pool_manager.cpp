@@ -17,7 +17,6 @@ auto BufferPoolManager<1>::NewFrameGuarded(page_id_t *page_id) -> BasicFrameGuar
 }
 auto BufferPoolManager<1>::FetchFrameBasic(page_id_t page_id) -> BasicFrameGuard {
   auto frame = new Frame<1>();
-  pages_.fetchPage(page_id);
   pages_.getPage(page_id, reinterpret_cast<int *>(frame->GetData()));
   frame->page_id_ = page_id;
   return {this, frame};
