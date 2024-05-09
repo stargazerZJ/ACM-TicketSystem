@@ -28,7 +28,7 @@ class BPlusTree {
 
   auto GetValue(const KeyType &key, ValueType *value = nullptr) -> PositionHint;
 
-  auto LowerBound(const KeyType &key) -> BPlusTree::PositionHint;
+  auto LowerBound(const KeyType &key) -> PositionHint;
 
   auto PartialSearch(const auto &key) -> std::vector<std::pair<KeyType, ValueType>>;
 
@@ -43,7 +43,7 @@ class BPlusTree {
   auto GetRootId() -> page_id_t;
 
   class PositionHint {
-    friend class BPlusTree<KeyType, ValueType>;
+    friend class BPlusTree;
     friend class Iterator;
    public:
     PositionHint() = default;
@@ -60,17 +60,17 @@ class BPlusTree {
   };
 
   class Iterator {
-    friend class BPlusTree<KeyType, ValueType>;
+    friend class BPlusTree;
    public:
     Iterator() = default;
-    Iterator(const BPlusTree<KeyType, ValueType> *bpt, const PositionHint &hint) : bpt_(bpt), hint_(hint) {
+    Iterator(const BPlusTree *bpt, const PositionHint &hint) : bpt_(bpt), hint_(hint) {
       if (hint.found()) {
         frame_ = bpt_->bpm_->FetchFrameBasic(hint_.PageId());
       }
     }
 
     auto operator++() -> Iterator & {
-      hint_.index_ ++;
+      ++hint_.index_;
       if (hint_.index_ > Frame()->GetSize()) {
         if (Frame()->GetNextPageId() == INVALID_PAGE_ID) {
           hint_ = {};
@@ -92,11 +92,11 @@ class BPlusTree {
     auto operator==(const Iterator &other) const -> bool { return bpt_ == other.bpt_ && hint_ == other.hint_; }
     auto operator!=(const Iterator &other) const -> bool { return !(*this == other); }
    private:
-    const BPlusTree<KeyType, ValueType> *bpt_{};
+    const BPlusTree *bpt_{};
     PositionHint hint_{};
     BasicFrameGuard frame_{};
-    auto Frame() const -> const LeafFrame * { return frame_.template As<LeafFrame>(); }
-    auto FrameMut() -> LeafFrame * { return frame_.template AsMut<LeafFrame>(); }
+    auto Frame() const -> const LeafFrame * { return frame_.As<LeafFrame>(); }
+    auto FrameMut() -> LeafFrame * { return frame_.AsMut<LeafFrame>(); }
   };
 
   auto End() -> Iterator { return Iterator(this, {}); }
@@ -114,7 +114,7 @@ class BPlusTree {
     page_id_t root_page_id_{INVALID_PAGE_ID};
     sjtu::vector<PositionHint> stack_;
     BasicFrameGuard current_frame_{};
-    auto IsRootPage(page_id_t page_id) -> bool { return page_id == root_page_id_; }
+    auto IsRootPage(page_id_t page_id) const -> bool { return page_id == root_page_id_; }
   };
 
   auto CreateRootFrame() -> BasicFrameGuard;

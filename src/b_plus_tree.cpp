@@ -14,20 +14,20 @@ BPlusTree<KeyType, ValueType>::BPlusTree(BufferPoolManager<PagesPerFrame> *bpm, 
   static_assert(sizeof(LeafFrame) <= Frame<PagesPerFrame>::kFrameSize);
   if (header_page_id_ == INVALID_PAGE_ID) {
     auto header_frame_guard = bpm->NewFrameGuarded(&header_page_id_);
-    auto header_frame = header_frame_guard.template AsMut<BPlusTreeHeaderFrame>();
+    auto header_frame = header_frame_guard.AsMut<BPlusTreeHeaderFrame>();
     header_frame->root_page_id_ = INVALID_PAGE_ID;
     header_page_id = header_page_id_;
   }
 }
 template<typename KeyType, typename ValueType>
-auto BPlusTree<KeyType, ValueType>::CreateRootFrame() -> BPlusTree::BasicFrameGuard {
+auto BPlusTree<KeyType, ValueType>::CreateRootFrame() -> BasicFrameGuard {
   auto header_frame_guard = bpm_->FetchFrameBasic(header_page_id_);
-  auto header_frame = header_frame_guard.template AsMut<BPlusTreeHeaderFrame>();
+  auto header_frame = header_frame_guard.AsMut<BPlusTreeHeaderFrame>();
 //  if (header_frame->root_page_id_ != INVALID_PAGE_ID) {
 //    return bpm_->FetchFrameBasic(header_frame->root_page_id_);
 //  }
   auto root_frame_guard = bpm_->NewFrameGuarded(&header_frame->root_page_id_);
-  auto root_frame = root_frame_guard.template AsMut<LeafFrame>();
+  auto root_frame = root_frame_guard.AsMut<LeafFrame>();
   root_frame->Init();
   return root_frame_guard;
 }
@@ -54,12 +54,12 @@ auto BPlusTree<KeyType, ValueType>::Insert(const KeyType &key, const ValueType &
     // split
     auto old_page_id = ctx.stack_.back().PageId();
     auto new_leaf_guard = bpm_->NewFrameGuarded();
-    auto new_leaf = new_leaf_guard.template AsMut<LeafFrame>();
+    auto new_leaf = new_leaf_guard.AsMut<LeafFrame>();
     new_leaf->Init();
     auto split_index = (leaf->GetSize() + 1) / 2;
     bool left = key < leaf->KeyAt(split_index);
     if (left) {
-      split_index--;
+      --split_index;
     }
     size_t move_count = (leaf->GetSize() - split_index);
     std::memcpy(new_leaf->Keys() + 1, leaf->Keys() + split_index + 1, move_count * sizeof(KeyType));
@@ -97,7 +97,7 @@ auto BPlusTree<KeyType, ValueType>::Remove(const KeyType &key) -> bool {
   return true;
 }
 template<typename KeyType, typename ValueType>
-auto BPlusTree<KeyType, ValueType>::GetValue(const KeyType &key, ValueType *value) -> BPlusTree::PositionHint {
+auto BPlusTree<KeyType, ValueType>::GetValue(const KeyType &key, ValueType *value) -> PositionHint {
   auto current_page_id = GetRootId();
   if (current_page_id == INVALID_PAGE_ID) {
     return {};
@@ -122,7 +122,7 @@ auto BPlusTree<KeyType, ValueType>::GetValue(const KeyType &key, ValueType *valu
   } while (true);
 }
 template<typename KeyType, typename ValueType>
-auto BPlusTree<KeyType, ValueType>::LowerBound(const KeyType &key) -> BPlusTree::PositionHint {
+auto BPlusTree<KeyType, ValueType>::LowerBound(const KeyType &key) -> PositionHint {
   auto ctx = FindLeafFrame(key);
   if (ctx.stack_.empty()) {
     return {};
@@ -163,7 +163,7 @@ auto BPlusTree<KeyType, ValueType>::KeyIndex(const KeyType &key, auto *frame) ->
   return it - keys;
 }
 template<typename KeyType, typename ValueType>
-auto BPlusTree<KeyType, ValueType>::FindLeafFrame(const KeyType &key) -> BPlusTree::Context {
+auto BPlusTree<KeyType, ValueType>::FindLeafFrame(const KeyType &key) -> Context {
   Context ctx;
   ctx.root_page_id_ = GetRootId();
   if (ctx.root_page_id_ == INVALID_PAGE_ID) {
@@ -438,7 +438,7 @@ auto BPlusTree<KeyType, ValueType>::RemoveInInternal(Context &context) -> void {
 template<typename KeyType, typename ValueType>
 auto BPlusTree<KeyType, ValueType>::SetValue(const KeyType &key,
                                              const ValueType &value,
-                                             const BPlusTree::PositionHint &hint) -> bool {
+                                             const PositionHint &hint) -> bool {
   if (!hint.found()) return SetValue(key, value);
   auto guard = bpm_->FetchFrameBasic(hint.PageId());
   auto leaf = guard.template AsMut<LeafFrame>();

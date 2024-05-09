@@ -121,14 +121,14 @@ class BPlusTreeInternalFrame : public BPlusTreeFrame {
 };
 template<typename KeyType, typename ValueType, int PagePerFrame>
 void BPlusTreeInternalFrame<KeyType, ValueType, PagePerFrame>::Init() {
-  BPlusTreeFrame::SetSize(0);
-  BPlusTreeFrame::SetFrameType(IndexFrameType::INTERNAL_FRAME);
+  SetSize(0);
+  SetFrameType(IndexFrameType::INTERNAL_FRAME);
 }
 template<typename KeyType, typename ValueType, int PagePerFrame>
 auto BPlusTreeInternalFrame<KeyType, ValueType, PagePerFrame>::ValueIndex(const ValueType &value) const -> int {
   // use std::find and std::execution::par_unseq
   auto it = std::find(std::execution::par_unseq,
-                      values_, values_ + BPlusTreeFrame::GetSize() + 1, value);
+                      values_, values_ + GetSize() + 1, value);
   return it - values_;
 }
 
@@ -207,8 +207,8 @@ class BPlusTreeLeafFrame : public BPlusTreeFrame {
 
 template<typename KeyType, typename ValueType, int PagePerFrame>
 void BPlusTreeLeafFrame<KeyType, ValueType, PagePerFrame>::Init() {
-  BPlusTreeFrame::SetSize(0);
-  BPlusTreeFrame::SetFrameType(IndexFrameType::LEAF_FRAME);
+  SetSize(0);
+  SetFrameType(IndexFrameType::LEAF_FRAME);
   next_page_id_ = INVALID_PAGE_ID;
 }
 
