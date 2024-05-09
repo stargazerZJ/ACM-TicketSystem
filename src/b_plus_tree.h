@@ -107,7 +107,7 @@ class BPlusTree {
 
  private:
   BufferPoolManager<PagesPerFrame> *bpm_;
-  page_id_t root_page_id_{};
+  page_id_t &root_page_id_;
 
   class Context {
    public:
