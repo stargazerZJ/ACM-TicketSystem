@@ -20,7 +20,7 @@ class BPlusTree {
   using BasicFrameGuard = BufferPoolManager<PagesPerFrame>::BasicFrameGuard;
   class PositionHint;
 
-  explicit BPlusTree(BufferPoolManager<PagesPerFrame> *bpm, page_id_t &header_page_id);
+  explicit BPlusTree(BufferPoolManager<PagesPerFrame> *bpm, page_id_t &root_page_id);
 
   auto Insert(const KeyType &key, const ValueType &value) -> bool;
 
@@ -40,7 +40,7 @@ class BPlusTree {
 
   auto SetValue(const KeyType &key, const ValueType &value) -> bool;
 
-  auto GetRootId() -> page_id_t;
+  auto GetRootId() const -> page_id_t;
 
   class PositionHint {
     friend class BPlusTree;
@@ -107,7 +107,7 @@ class BPlusTree {
 
  private:
   BufferPoolManager<PagesPerFrame> *bpm_;
-  page_id_t header_page_id_{};
+  page_id_t root_page_id_{};
 
   class Context {
    public:

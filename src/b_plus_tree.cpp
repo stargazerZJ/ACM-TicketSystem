@@ -8,25 +8,14 @@
 
 namespace storage {
 template<typename KeyType, typename ValueType>
-BPlusTree<KeyType, ValueType>::BPlusTree(BufferPoolManager<PagesPerFrame> *bpm, page_id_t &header_page_id)
-    : bpm_(bpm), header_page_id_(header_page_id) {
+BPlusTree<KeyType, ValueType>::BPlusTree(BufferPoolManager<PagesPerFrame> *bpm, page_id_t &root_page_id)
+    : bpm_(bpm), root_page_id_(root_page_id) {
   static_assert(sizeof(InternalFrame) <= Frame<PagesPerFrame>::kFrameSize);
   static_assert(sizeof(LeafFrame) <= Frame<PagesPerFrame>::kFrameSize);
-  if (header_page_id_ == INVALID_PAGE_ID) {
-    auto header_frame_guard = bpm->NewFrameGuarded(&header_page_id_);
-    auto header_frame = header_frame_guard.AsMut<BPlusTreeHeaderFrame>();
-    header_frame->root_page_id_ = INVALID_PAGE_ID;
-    header_page_id = header_page_id_;
-  }
 }
 template<typename KeyType, typename ValueType>
 auto BPlusTree<KeyType, ValueType>::CreateRootFrame() -> BasicFrameGuard {
-  auto header_frame_guard = bpm_->FetchFrameBasic(header_page_id_);
-  auto header_frame = header_frame_guard.AsMut<BPlusTreeHeaderFrame>();
-//  if (header_frame->root_page_id_ != INVALID_PAGE_ID) {
-//    return bpm_->FetchFrameBasic(header_frame->root_page_id_);
-//  }
-  auto root_frame_guard = bpm_->NewFrameGuarded(&header_frame->root_page_id_);
+  auto root_frame_guard = bpm_->NewFrameGuarded(&root_page_id_);
   auto root_frame = root_frame_guard.AsMut<LeafFrame>();
   root_frame->Init();
   return root_frame_guard;
@@ -143,16 +132,12 @@ auto BPlusTree<KeyType, ValueType>::LowerBound(const KeyType &key) -> PositionHi
   }
 }
 template<typename KeyType, typename ValueType>
-auto BPlusTree<KeyType, ValueType>::GetRootId() -> page_id_t {
-  auto header_frame_guard = bpm_->FetchFrameBasic(header_page_id_);
-  auto header_frame = header_frame_guard.template As<BPlusTreeHeaderFrame>();
-  return header_frame->root_page_id_;
+auto BPlusTree<KeyType, ValueType>::GetRootId() const -> page_id_t {
+  return root_page_id_;
 }
 template<typename KeyType, typename ValueType>
 auto BPlusTree<KeyType, ValueType>::SetRootId(page_id_t root_id) -> void {
-  auto header_frame_guard = bpm_->FetchFrameBasic(header_page_id_);
-  auto header_frame = header_frame_guard.template AsMut<BPlusTreeHeaderFrame>();
-  header_frame->root_page_id_ = root_id;
+  root_page_id_ = root_id;
 }
 template<typename KeyType, typename ValueType>
 auto BPlusTree<KeyType, ValueType>::KeyIndex(const KeyType &key, auto *frame) -> int {

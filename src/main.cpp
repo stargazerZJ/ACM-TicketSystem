@@ -30,8 +30,8 @@ void bpt_test() {
    */
   bool reset = true;
   storage::BufferPoolManager<1> bpm("test", reset);
-  storage::page_id_t header_page_id = storage::INVALID_PAGE_ID;
-  storage::BPlusTree<storage::hash_t, int> bpt(&bpm, header_page_id);
+  storage::page_id_t root_page_id = storage::INVALID_PAGE_ID;
+  storage::BPlusTree<storage::hash_t, int> bpt(&bpm, root_page_id);
   char command;
   storage::hash_t key;
   int value;
@@ -95,11 +95,11 @@ void storage_test(bool force_reset = false) {
     reset = !file.good();
   }
   storage::BufferPoolManager<1> bpm("test2", reset);
-  int &bpt_header = bpm.getInfo(1);
+  int &bpt_root = bpm.getInfo(1);
   if (reset) {
-    bpt_header = storage::INVALID_PAGE_ID;
+    bpt_root = storage::INVALID_PAGE_ID;
   }
-  storage::BPlusTree<storage::PackedPair<storage::hash_t, int>, char> bpt(&bpm, bpt_header);
+  storage::BPlusTree<storage::PackedPair<storage::hash_t, int>, char> bpt(&bpm, bpt_root);
   storage::Hash hash;
   int n;
   using IO = fastio::FastIO;
