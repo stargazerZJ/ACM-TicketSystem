@@ -5,6 +5,7 @@
 //
 
 #pragma once
+#include "utility.h"
 #include "b_plus_tree_frame.h"
 #include "buffer_pool_manager.h"
 #include "stlite/vector.h"

@@ -4,7 +4,6 @@
 
 #include "config.h"
 #include "b_plus_tree.h"
-#include <algorithm>
 
 namespace storage {
 template<typename KeyType, typename ValueType>
@@ -144,7 +143,7 @@ auto BPlusTree<KeyType, ValueType>::KeyIndex(const KeyType &key, auto *frame) ->
   // find the first index i that key < frame->KeyAt(i), frame->GetSize() + 1 if not found
   // TODO(opt): interpolation search
   auto keys = frame->Keys();
-  auto it = std::upper_bound(keys + 1, keys + frame->GetSize() + 1, key);
+  auto it = upper_bound(keys + 1, keys + frame->GetSize() + 1, key);
   return it - keys;
 }
 template<typename KeyType, typename ValueType>
