@@ -115,7 +115,7 @@ class BufferPoolManager {
         }
         void Drop() {
           if (frame_ == nullptr) return;
-          bpm_->UnpinFrame(PageId());
+          bpm_->UnpinFrame(PageId(), frame_->is_dirty_);
           frame_ = nullptr;
         }
         void Delete() {
@@ -135,16 +135,15 @@ class BufferPoolManager {
     int &GetInfo(int n) { return disk_.GetInfo(n); }
 
   private:
-    using Frame = Frame<PagesPerFrame>;
     using frame_id_t = LRUKReplacer::frame_id_t;
     const size_t pool_size_;
     DiskManager<PagesPerFrame> disk_;
     LRUKReplacer replacer_;
     std::unordered_map<page_id_t, frame_id_t> page_table_;
-    std::vector<Frame> buffer_;
+    std::vector<Frame<PagesPerFrame>> buffer_;
     std::vector<frame_id_t> free_list_;
 
-    auto FetchFrame(page_id_t page_id) -> Frame *;
+    auto FetchFrame(page_id_t page_id) -> Frame<PagesPerFrame> *;
     auto UnpinFrame(page_id_t page_id, bool is_dirty) -> bool;
     auto DeletePage(page_id_t page_id) -> void; // delete regardless of pin count
     void FlushAllFrames();
@@ -159,6 +158,8 @@ auto BufferPoolManager<PagesPerFrame>::NewFrameGuarded(page_id_t *page_id) -> Ba
   free_list_.pop_back();
   auto &frame = buffer_[frame_id];
   frame.page_id_ = page_id_;
+  frame.is_dirty_ = true;
+  ++frame.pin_count_;
   page_table_[page_id_] = frame_id;
   replacer_.RecordAccess(page_id_);
   return {this, &frame};
@@ -187,7 +188,7 @@ bool BufferPoolManager<PagesPerFrame>::EnsureFreeList() {
   return true;
 }
 template<int PagesPerFrame>
-auto BufferPoolManager<PagesPerFrame>::FetchFrame(page_id_t page_id) -> Frame * {
+auto BufferPoolManager<PagesPerFrame>::FetchFrame(page_id_t page_id) -> Frame<PagesPerFrame> * {
   if (auto it = page_table_.find(page_id); it != page_table_.end()) {
     auto &frame = buffer_[it->second];
     replacer_.RecordAccess(page_id);
@@ -228,9 +229,9 @@ auto BufferPoolManager<PagesPerFrame>::DeletePage(page_id_t page_id) -> void {
   if (auto it = page_table_.find(page_id); it != page_table_.end()) {
     auto &frame = buffer_[it->second];
     frame.Reset();
-    page_table_.erase(it);
     replacer_.Remove(it->second, page_id);
     free_list_.push_back(it->second);
+    page_table_.erase(it);
   }
   disk_.DeallocateFrame(page_id);
 }
@@ -243,81 +244,81 @@ void BufferPoolManager<PagesPerFrame>::FlushAllFrames() {
   }
 }
 
-template<>
-class BufferPoolManager<1> {
-  public:
-    explicit BufferPoolManager(const std::string &file_path, bool reset = false) : disk_(file_path) {
-      disk_.initialize(reset);
-    }
-
-    class BasicFrameGuard {
-      friend BufferPoolManager;
-
-      public:
-        BasicFrameGuard() = default;
-        BasicFrameGuard(const BasicFrameGuard &) = delete;
-        BasicFrameGuard(BasicFrameGuard &&that) noexcept: bpm_(that.bpm_), frame_(that.frame_) {
-          that.frame_ = nullptr;
-        }
-
-        BasicFrameGuard &operator=(const BasicFrameGuard &) = delete;
-        BasicFrameGuard &operator=(BasicFrameGuard &&that) noexcept {
-          if (this == &that) {
-            return *this;
-          }
-          Drop();
-          bpm_ = that.bpm_;
-          frame_ = that.frame_;
-          that.frame_ = nullptr;
-          return *this;
-        }
-
-        ~BasicFrameGuard() {
-          Drop();
-        }
-
-        auto PageId() -> page_id_t { return frame_->GetPageId(); }
-        auto GetData() -> char * { return frame_->GetData(); }
-        auto GetData() const -> const char * { return frame_->GetData(); }
-        auto GetDataMut() -> char * {
-          frame_->is_dirty_ = true;
-          return frame_->GetData();
-        }
-        template<class T>
-        auto As() const -> const T * {
-          return reinterpret_cast<const T *>(GetData());
-        }
-        template<class T>
-        auto AsMut() -> T * {
-          return reinterpret_cast<T *>(GetDataMut());
-        }
-        void Drop() {
-          // as no caching is implemented, this is equivalent to unpin
-          if (frame_ == nullptr) return;
-          if (frame_->is_dirty_) {
-            bpm_->disk_.setPage(frame_->page_id_, reinterpret_cast<const int *>(frame_->GetData()));
-          }
-          delete frame_;
-          frame_ = nullptr;
-        }
-        void Delete() {
-          bpm_->disk_.deletePage(frame_->page_id_);
-          delete frame_;
-          frame_ = nullptr;
-        }
-
-      private:
-        BasicFrameGuard(BufferPoolManager *bpm, Frame<1> *frame) : bpm_(bpm), frame_(frame) {
-        }
-        BufferPoolManager *bpm_;
-        Frame<1> *frame_;
-    };
-    auto NewFrameGuarded(page_id_t *page_id = nullptr) -> BasicFrameGuard;
-    auto FetchFrameBasic(page_id_t page_id) -> BasicFrameGuard;
-
-    int &getInfo(unsigned int n) { return disk_.getInfo(n); }
-
-  private:
-    external_memory::Pages disk_;
-};
+// template<>
+// class BufferPoolManager<1> {
+//   public:
+//     explicit BufferPoolManager(const std::string &file_path, bool reset = false) : disk_(file_path) {
+//       disk_.initialize(reset);
+//     }
+//
+//     class BasicFrameGuard {
+//       friend BufferPoolManager;
+//
+//       public:
+//         BasicFrameGuard() = default;
+//         BasicFrameGuard(const BasicFrameGuard &) = delete;
+//         BasicFrameGuard(BasicFrameGuard &&that) noexcept: bpm_(that.bpm_), frame_(that.frame_) {
+//           that.frame_ = nullptr;
+//         }
+//
+//         BasicFrameGuard &operator=(const BasicFrameGuard &) = delete;
+//         BasicFrameGuard &operator=(BasicFrameGuard &&that) noexcept {
+//           if (this == &that) {
+//             return *this;
+//           }
+//           Drop();
+//           bpm_ = that.bpm_;
+//           frame_ = that.frame_;
+//           that.frame_ = nullptr;
+//           return *this;
+//         }
+//
+//         ~BasicFrameGuard() {
+//           Drop();
+//         }
+//
+//         auto PageId() -> page_id_t { return frame_->GetPageId(); }
+//         auto GetData() -> char * { return frame_->GetData(); }
+//         auto GetData() const -> const char * { return frame_->GetData(); }
+//         auto GetDataMut() -> char * {
+//           frame_->is_dirty_ = true;
+//           return frame_->GetData();
+//         }
+//         template<class T>
+//         auto As() const -> const T * {
+//           return reinterpret_cast<const T *>(GetData());
+//         }
+//         template<class T>
+//         auto AsMut() -> T * {
+//           return reinterpret_cast<T *>(GetDataMut());
+//         }
+//         void Drop() {
+//           // as no caching is implemented, this is equivalent to unpin
+//           if (frame_ == nullptr) return;
+//           if (frame_->is_dirty_) {
+//             bpm_->disk_.setPage(frame_->page_id_, reinterpret_cast<const int *>(frame_->GetData()));
+//           }
+//           delete frame_;
+//           frame_ = nullptr;
+//         }
+//         void Delete() {
+//           bpm_->disk_.deletePage(frame_->page_id_);
+//           delete frame_;
+//           frame_ = nullptr;
+//         }
+//
+//       private:
+//         BasicFrameGuard(BufferPoolManager *bpm, Frame<1> *frame) : bpm_(bpm), frame_(frame) {
+//         }
+//         BufferPoolManager *bpm_;
+//         Frame<1> *frame_;
+//     };
+//     auto NewFrameGuarded(page_id_t *page_id = nullptr) -> BasicFrameGuard;
+//     auto FetchFrameBasic(page_id_t page_id) -> BasicFrameGuard;
+//
+//     int &getInfo(unsigned int n) { return disk_.getInfo(n); }
+//
+//   private:
+//     external_memory::Pages disk_;
+// };
 } // namespace storage

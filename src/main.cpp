@@ -95,7 +95,7 @@ void storage_test(bool force_reset = false) {
     reset = !file.good();
   }
   storage::BufferPoolManager<1> bpm("test2", reset);
-  int &bpt_root = bpm.getInfo(1);
+  int &bpt_root = bpm.GetInfo(1);
   if (reset) {
     bpt_root = storage::INVALID_PAGE_ID;
   }

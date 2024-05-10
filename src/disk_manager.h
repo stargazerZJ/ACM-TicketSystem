@@ -64,22 +64,20 @@ void DiskManager<PagesPerFrame>::ShutDown() {
 }
 template<int PagesPerFrame>
 void DiskManager<PagesPerFrame>::WriteFrame(page_id_t page_id, const char *page_data) {
-  ASSERT(page_id > 0 && page_id <= size_);
+  ASSERT(page_id >= 0 && page_id < size_);
   db_io_.seekp(toOffset(page_id));
   db_io_.write(page_data, kFrameSize);
 }
 template<int PagesPerFrame>
 void DiskManager<PagesPerFrame>::ReadFrame(page_id_t page_id, char *page_data) {
-  ASSERT(page_id > 0 && page_id < size_);
+  ASSERT(page_id >= 0 && page_id < size_);
   db_io_.seekg(toOffset(page_id));
   db_io_.read(page_data, kFrameSize);
 }
 template<int PagesPerFrame>
 unsigned int DiskManager<PagesPerFrame>::AllocateFrame() {
   if (free_head == INVALID_PAGE_ID) {
-    int ret = size_ * PagesPerFrame + 1;
-    ++ size_;
-    return ret;
+    return size_ ++;
   }
   int new_free_head = INVALID_PAGE_ID;
   int ret = free_head;
@@ -90,7 +88,7 @@ unsigned int DiskManager<PagesPerFrame>::AllocateFrame() {
 }
 template<int PagesPerFrame>
 void DiskManager<PagesPerFrame>::DeallocateFrame(page_id_t page_id) {
-  ASSERT(page_id > 0 && page_id < size_);
+  ASSERT(page_id >= 0 && page_id < size_);
   int old_free_head = free_head;
   free_head = page_id;
   db_io_.seekp(toOffset(page_id));
@@ -103,6 +101,6 @@ int &DiskManager<PagesPerFrame>::GetInfo(int index) {
 }
 template<int PagesPerFrame>
 int DiskManager<PagesPerFrame>::toOffset(page_id_t page_id) {
-  return page_id * PAGE_SIZE;
+  return page_id * kFrameSize + kInfoSize;
 }
 } // namespace storage

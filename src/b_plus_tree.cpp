@@ -469,7 +469,7 @@ auto BPlusTree<KeyType, ValueType>::ValidateBPlusTree(page_id_t root_page_id,
                                                       page_id_t page_id,
                                                       const KeyType &lower_bound,
                                                       const KeyType &upper_bound) -> int {
-  if (page_id < 1) {
+  if (page_id < 0) {
     throw std::runtime_error("Invalid page id");
   }
   auto frame_guard = bpm_->FetchFrameBasic(page_id);
