@@ -5,9 +5,10 @@
 #pragma once
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "Simplify"
-#include "utility.h"
-#include "b_plus_tree_frame.h"
 #include "buffer_pool_manager.h"
+#include "b_plus_tree_frame.h"
+#include "lru_k_replacer.h"
+#include "utility.h"
 #include "stlite/vector.h"
 
 namespace storage {
