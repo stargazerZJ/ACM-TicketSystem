@@ -19,5 +19,7 @@ static constexpr int BPT_MAX_DEGREE = std::numeric_limits<int>::max(); // For te
 
 using hash_t = uint64_t;
 
+static constexpr int LRU_REPLACER_K = 10;
+static constexpr int BUFFER_POOL_SIZE = 1000;
 
-}
+} // namespace storage
