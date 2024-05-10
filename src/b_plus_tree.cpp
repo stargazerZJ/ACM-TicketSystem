@@ -41,6 +41,7 @@ auto BPlusTree<KeyType, ValueType>::Insert(const KeyType &key, const ValueType &
     // split
     auto old_page_id = ctx.stack_.back().PageId();
     auto new_leaf_guard = bpm_->NewFrameGuarded();
+    page_id_t new_leaf_id = new_leaf_guard.PageId();
     auto new_leaf = new_leaf_guard.AsMut<LeafFrame>();
     new_leaf->Init();
     auto split_index = (leaf->GetSize() + 1) / 2;
@@ -54,7 +55,7 @@ auto BPlusTree<KeyType, ValueType>::Insert(const KeyType &key, const ValueType &
     new_leaf->SetSize(move_count);
     leaf->SetSize(split_index);
     new_leaf->SetNextPageId(leaf->GetNextPageId());
-    leaf->SetNextPageId(new_leaf_guard.PageId());
+    leaf->SetNextPageId(new_leaf_id);
     if (left) {
       InsertInLeaf(key, value, ctx);
     } else {
@@ -65,7 +66,8 @@ auto BPlusTree<KeyType, ValueType>::Insert(const KeyType &key, const ValueType &
       InsertInLeaf(key, value, ctx);
       new_leaf_guard = std::move(ctx.current_frame_);
     }
-    InsertInParent(old_page_id, new_leaf->KeyAt(1), new_leaf_guard.PageId(), ctx);
+    new_leaf_guard.Drop();
+    InsertInParent(old_page_id, new_leaf->KeyAt(1), new_leaf_id, ctx);
   }
   return true;
 }
@@ -232,6 +234,7 @@ auto BPlusTree<KeyType, ValueType>::InsertInParent(page_id_t old_page_id,
     // split
     old_page_id = context.stack_.back().PageId();
     auto new_internal_guard = bpm_->NewFrameGuarded();
+    page_id_t new_internal_id = new_internal_guard.PageId();
     auto new_internal = new_internal_guard.template AsMut<InternalFrame>();
     new_internal->Init();
     auto split_index = (parent_frame->GetSize() + 1) / 2 + 1;
@@ -261,7 +264,8 @@ auto BPlusTree<KeyType, ValueType>::InsertInParent(page_id_t old_page_id,
       InsertInInternal(key, new_page_id, context);
       new_internal_guard = std::move(context.current_frame_);
     }
-    InsertInParent(old_page_id, key_to_insert, new_internal_guard.PageId(), context);
+    new_internal_guard.Drop();
+    InsertInParent(old_page_id, key_to_insert, new_internal_id, context);
   }
 }
 template<typename KeyType, typename ValueType>
@@ -336,8 +340,10 @@ auto BPlusTree<KeyType, ValueType>::RemoveInLeaf(Context &context) -> void {
     left->SetNextPageId(right->GetNextPageId());
     if (sibling_is_right) {
       sibling_frame_guard.Delete();
+      context.current_frame_.Drop();
     } else {
       context.current_frame_.Delete();
+      sibling_frame_guard.Drop();
     }
     context.current_frame_ = std::move(parent_frame_guard);
     context.stack_.pop_back();
@@ -405,8 +411,10 @@ auto BPlusTree<KeyType, ValueType>::RemoveInInternal(Context &context) -> void {
     left->IncreaseSize(move_count + 1);
     if (sibling_is_right) {
       sibling_frame_guard.Delete();
+      context.current_frame_.Drop();
     } else {
       context.current_frame_.Delete();
+      sibling_frame_guard.Drop();
     }
     context.current_frame_ = std::move(parent_frame_guard);
     context.stack_.pop_back();

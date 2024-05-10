@@ -237,6 +237,7 @@ auto BufferPoolManager<PagesPerFrame>::DeletePage(page_id_t page_id) -> void {
 template<int PagesPerFrame>
 void BufferPoolManager<PagesPerFrame>::FlushAllFrames() {
   for (auto &frame : buffer_) {
+    ASSERT(frame.GetPinCount() == 0);
     if (frame.IsDirty()) {
       disk_.WriteFrame(frame.GetPageId(), frame.GetData());
     }
