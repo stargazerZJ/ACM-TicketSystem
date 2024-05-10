@@ -5,8 +5,8 @@
 #include "lru_k_replacer.h"
 
 namespace storage {
-LRUKReplacer::LRUKReplacer(size_t num_frames) {
-  evict_hint_.resize(num_frames, evitable_frames_.end());
+LRUKReplacer::LRUKReplacer(size_t pool_size) {
+  evict_hint_.resize(pool_size, evitable_frames_.end());
 }
 auto LRUKReplacer::Evict(frame_id_t *frame_id) -> bool {
   if (evitable_frames_.empty()) {
@@ -53,7 +53,7 @@ void LRUKReplacer::LRUKNode::RecordAccess() {
   queue[tail] = timestamp_;
   tail = (tail + 1) % replacer_k;
 }
-auto LRUKReplacer::LRUKNode::GetKDistance() {
-  return time_distance_t(queue[tail], queue[(tail + replacer_k - 1) % replacer_k]);
+auto LRUKReplacer::LRUKNode::GetKDistance() -> time_distance_t {
+  return {queue[tail], queue[(tail + replacer_k - 1) % replacer_k]};
 }
 } // namespace storage

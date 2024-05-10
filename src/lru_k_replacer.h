@@ -16,7 +16,7 @@ class LRUKReplacer {
     using frame_id_t = int;
     using timestamp_t = uint32_t;
     using time_distance_t = std::pair<timestamp_t, timestamp_t>;
-    explicit LRUKReplacer(size_t num_frames);
+    explicit LRUKReplacer(size_t pool_size);
 
     /// Will not clear the access history
     auto Evict(frame_id_t *frame_id) -> bool;
@@ -38,7 +38,7 @@ class LRUKReplacer {
     class LRUKNode {
       public:
         void RecordAccess();
-        auto GetKDistance();
+        auto GetKDistance() -> time_distance_t;
 
       private:
         timestamp_t queue[replacer_k] = {};
