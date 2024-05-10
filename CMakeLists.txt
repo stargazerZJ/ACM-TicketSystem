@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.22)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON) # For clang-tidy.
 set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON) # Require C++17 support.
+set(CMAKE_CXX_STANDARD_REQUIRED ON) # Require C++20.
 
 project(ACM_TicketSystem)
 
@@ -11,6 +11,12 @@ include_directories(src)
 include_directories(third_party)
 
 
+if(DEFINED ENV{LOCAL})
+    add_definitions(-DLOCAL)
+endif()
+if(DEFINED ENV{DEBUG})
+    add_definitions(-DDEBUG)
+endif()
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Ofast -march=native")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address,undefined,leak")
