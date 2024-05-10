@@ -8,7 +8,7 @@
 namespace storage {
 template<typename KeyType, typename ValueType>
 BPlusTree<KeyType, ValueType>::BPlusTree(BufferPoolManager<PagesPerFrame> *bpm, page_id_t &root_page_id)
-    : bpm_(bpm), root_page_id_(root_page_id) {
+  : bpm_(bpm), root_page_id_(root_page_id) {
   static_assert(sizeof(InternalFrame) <= Frame<PagesPerFrame>::kFrameSize);
   static_assert(sizeof(LeafFrame) <= Frame<PagesPerFrame>::kFrameSize);
 }
@@ -27,11 +27,10 @@ auto BPlusTree<KeyType, ValueType>::Insert(const KeyType &key, const ValueType &
     ctx.current_frame_ = CreateRootFrame();
     ctx.root_page_id_ = ctx.current_frame_.PageId();
     ctx.stack_.emplace_back(ctx.root_page_id_, 0);
-  }
-  {
+  } {
     auto leaf = ctx.current_frame_.template As<LeafFrame>();
     if (ctx.stack_.back().Index() <= leaf->GetSize() &&
-        leaf->KeyAt(ctx.stack_.back().Index()) == key) {
+      leaf->KeyAt(ctx.stack_.back().Index()) == key) {
       return false;
     }
   }
@@ -78,7 +77,7 @@ auto BPlusTree<KeyType, ValueType>::Remove(const KeyType &key) -> bool {
   }
   auto leaf = ctx.current_frame_.template As<LeafFrame>();
   if (ctx.stack_.back().Index() > leaf->GetSize()
-      || leaf->KeyAt(ctx.stack_.back().Index()) != key) {
+    || leaf->KeyAt(ctx.stack_.back().Index()) != key) {
     return false;
   }
   RemoveInLeaf(ctx);
@@ -299,7 +298,7 @@ auto BPlusTree<KeyType, ValueType>::RemoveInLeaf(Context &context) -> void {
     return;
   }
   auto parent_frame_guard = bpm_->FetchFrameBasic(
-      context.stack_[context.stack_.size() - 2].PageId());
+    context.stack_[context.stack_.size() - 2].PageId());
   auto parent_frame = parent_frame_guard.template AsMut<InternalFrame>();
   auto [sibling_page_id, sibling_is_right] = FindSibling(context, parent_frame);
   auto parent_index = context.stack_[context.stack_.size() - 2].Index() + sibling_is_right;
@@ -365,7 +364,7 @@ auto BPlusTree<KeyType, ValueType>::RemoveInInternal(Context &context) -> void {
     return;
   }
   auto parent_frame_guard = bpm_->FetchFrameBasic(
-      context.stack_[context.stack_.size() - 2].PageId());
+    context.stack_[context.stack_.size() - 2].PageId());
   auto parent_frame = parent_frame_guard.template AsMut<InternalFrame>();
   auto [sibling_page_id, sibling_is_right] = FindSibling(context, parent_frame);
   auto parent_index = context.stack_[context.stack_.size() - 2].Index() + sibling_is_right;
@@ -444,11 +443,11 @@ auto BPlusTree<KeyType, ValueType>::SetValue(const KeyType &key, const ValueType
   return false;
 }
 template<typename KeyType, typename ValueType>
-auto BPlusTree<KeyType, ValueType>::PartialSearch(const auto &key) -> std::vector<std::pair<KeyType, ValueType>> {
+auto BPlusTree<KeyType, ValueType>::PartialSearch(const auto &key) -> std::vector<std::pair<KeyType, ValueType> > {
   using KeyTypeFirst = KeyType::first_type;
   using KeyTypeSecond = KeyType::second_type;
   static_assert(std::is_same_v<decltype(key), const KeyTypeFirst &>);
-  std::vector<std::pair<KeyType, ValueType>> result;
+  std::vector<std::pair<KeyType, ValueType> > result;
   auto pos = LowerBound(KeyType(key, std::numeric_limits<KeyTypeSecond>::min()));
   auto it = Iterator(this, pos);
   while (it != End() && it.Key().first == key) {
@@ -570,7 +569,6 @@ void BPlusTree<KeyType, ValueType>::PrintTree(page_id_t page_id, const BPlusTree
     }
     std::cout << std::endl;
     std::cout << std::endl;
-
   } else {
     auto *internal = reinterpret_cast<const InternalFrame *>(page);
     std::cout << "Internal Page: " << page_id << std::endl;
