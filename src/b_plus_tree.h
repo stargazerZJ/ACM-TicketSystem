@@ -14,9 +14,8 @@
 namespace storage {
 template<typename KeyType, typename ValueType>
 class BPlusTree {
- private:
-  static constexpr int PagesPerFrame = 1;
  public:
+  static constexpr int PagesPerFrame = 2;
   using InternalFrame = BPlusTreeInternalFrame<KeyType, page_id_t, PagesPerFrame>;
   using LeafFrame = BPlusTreeLeafFrame<KeyType, ValueType, PagesPerFrame>;
   using BasicFrameGuard = BufferPoolManager<PagesPerFrame>::BasicFrameGuard;

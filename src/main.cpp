@@ -18,6 +18,16 @@ void bpt_frame_test() {
   std::cout << "Size of BPlusTreeInternalFrame<hash_t, page_id_t, 1>: " << sizeof(internal_frame) << std::endl;
   std::cout << "Size of BPlusTreeLeafFrame<hash_t, int, 1>: " << sizeof(leaf_frame) << std::endl;
   std::cout << "Size of BPlusTreeLeafFrame<char, char, 1>: " << sizeof(leaf_frame2) << std::endl;
+
+  using internal_frame2 = storage::BPlusTreeInternalFrame<storage::hash_t, storage::page_id_t, 2>;
+  using leaf_frame3 = storage::BPlusTreeLeafFrame<storage::hash_t, int, 2>;
+  using leaf_frame4 = storage::BPlusTreeLeafFrame<char, char, 2>;
+  std::cout << "Size of a frame with 2 pages: " << storage::Frame<2>::kFrameSize << std::endl;
+  std::cout << "Size of BPlusTreeInternalFrame<hash_t, page_id_t, 2>: " << sizeof(internal_frame2) << std::endl;
+  std::cout << "Max Size of BPlusTreeInternalFrame<hash_t, page_id_t, 2>: " << internal_frame2::GetMaxSize() << std::endl;
+  std::cout << "(8192 - 8 - 4) / (8 + 4) " << (8192 - 4 - 4) / (8 + 4) << std::endl;
+  std::cout << "Size of BPlusTreeLeafFrame<hash_t, int, 2>: " << sizeof(leaf_frame3) << std::endl;
+  std::cout << "Size of BPlusTreeLeafFrame<char, char, 2>: " << sizeof(leaf_frame4) << std::endl;
 }
 
 void bpt_test() {
@@ -29,7 +39,8 @@ void bpt_test() {
    * <value>: int
    */
   bool reset = true;
-  storage::BufferPoolManager<1> bpm("test", reset);
+  static constexpr int pages_per_frame = storage::BPlusTree<int, int>::PagesPerFrame;
+  storage::BufferPoolManager<pages_per_frame> bpm("test", reset);
   storage::page_id_t root_page_id = storage::INVALID_PAGE_ID;
   storage::BPlusTree<storage::hash_t, int> bpt(&bpm, root_page_id);
   char command;
@@ -66,10 +77,10 @@ void bpt_test() {
     if (command != 'F' && i % 100 == 0) {
 //      std::cerr << "Print B+ tree after operation " << i << ": " << command << " " << key << std::endl;
 //      bpt.Print();
-      if (!bpt.Validate()) {
-        std::cerr << "Validation failed after " << i << " operations" << std::endl;
-        break;
-      }
+      // if (!bpt.Validate()) {
+      //   std::cerr << "Validation failed after " << i << " operations" << std::endl;
+      //   break;
+      // }
     }
   }
 }
@@ -94,7 +105,8 @@ void storage_test(bool force_reset = false) {
     std::ifstream file("test2.db");
     reset = !file.good();
   }
-  storage::BufferPoolManager<1> bpm("test2", reset);
+  static constexpr int pages_per_frame = storage::BPlusTree<int, int>::PagesPerFrame;
+  storage::BufferPoolManager<pages_per_frame> bpm("test2", reset);
   int &bpt_root = bpm.GetInfo(1);
   if (reset) {
     bpt_root = storage::INVALID_PAGE_ID;

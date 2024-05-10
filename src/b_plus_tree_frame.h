@@ -25,6 +25,7 @@ enum class IndexFrameType : uint8_t {
  * | FrameType (1) | CurrentSize (31) |  ...   |
  * ---------------------------------------------
  */
+#pragma pack(push, 1)
 class BPlusTreeFrame {
  public:
   // Delete all constructor / destructor to ensure memory safety
@@ -236,4 +237,5 @@ class BPlusTreeLeafFrame<hash_t, int, 4>;
 static_assert(sizeof(BPlusTreeLeafFrame<hash_t, int, 4>) <= Frame<4>::kFrameSize,
               "BPlusTreeLeafFrame size is not correct");
 
+#pragma pack(pop)
 }  // namespace storage
