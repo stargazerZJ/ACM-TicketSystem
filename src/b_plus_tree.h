@@ -1,10 +1,10 @@
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "Simplify"
 //
 // Created by zj on 4/28/2024.
 //
 
 #pragma once
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "Simplify"
 #include "utility.h"
 #include "b_plus_tree_frame.h"
 #include "buffer_pool_manager.h"
@@ -54,6 +54,7 @@ class BPlusTree {
     auto Index() const -> int { return index_; }
     auto found() const -> bool { return page_id_ != INVALID_PAGE_ID; }
     operator bool() const { return found(); }
+    bool operator==(const PositionHint &) const = default;
 
    private:
     page_id_t page_id_{INVALID_PAGE_ID};
