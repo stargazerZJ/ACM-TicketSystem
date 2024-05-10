@@ -50,7 +50,7 @@ class BufferPoolManager {
   public:
     explicit BufferPoolManager(const std::string &file_path,
                                bool reset,
-                               size_t pool_size = BUFFER_POOL_SIZE) : disk_(file_path, reset),
+                               size_t pool_size = BUFFER_POOL_SIZE) : disk_(file_path + ".db", reset),
                                                                       replacer_(pool_size), pool_size_(pool_size),
                                                                       buffer_(pool_size), free_list_(pool_size) {
       std::iota(free_list_.begin(), free_list_.end(), 0);
@@ -158,7 +158,6 @@ auto BufferPoolManager<PagesPerFrame>::NewFrameGuarded(page_id_t *page_id) -> Ba
   free_list_.pop_back();
   auto &frame = buffer_[frame_id];
   frame.page_id_ = page_id_;
-  frame.is_dirty_ = true;
   ++frame.pin_count_;
   page_table_[page_id_] = frame_id;
   replacer_.RecordAccess(page_id_);

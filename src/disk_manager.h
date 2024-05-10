@@ -45,7 +45,7 @@ DiskManager<PagesPerFrame>::DiskManager(std::string db_file, bool reset) : db_fi
   } else {
     db_io_.open(db_file_, std::ios::in | std::ios::out | std::ios::binary);
     db_io_.read(reinterpret_cast<char *>(info_page_), sizeof(InfoPage));
-    db_io_.seekg(std::ios::end);
+    db_io_.seekg(0, std::ios::end);
     size_ = (db_io_.tellg() / PAGE_SIZE - 1) / PagesPerFrame;
   }
   if (!db_io_.is_open()) {
@@ -101,6 +101,6 @@ int &DiskManager<PagesPerFrame>::GetInfo(int index) {
 }
 template<int PagesPerFrame>
 int DiskManager<PagesPerFrame>::toOffset(page_id_t page_id) {
-  return page_id * kFrameSize + kInfoSize;
+  return page_id * kFrameSize + sizeof(InfoPage);
 }
 } // namespace storage
