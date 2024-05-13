@@ -11,6 +11,7 @@
 #include "fastio.h"
 #include "hash.h"
 #include "utility.h"
+#include "variable_length_store.h"
 
 void bpt_frame_test() {
   using internal_frame = storage::BPlusTreeInternalFrame<storage::hash_t, storage::page_id_t, 1>;
@@ -43,7 +44,7 @@ void bpt_test() {
    */
   bool reset = true;
   static constexpr int pages_per_frame = storage::BPT_PAGES_PER_FRAME;
-  storage::BufferPoolManager<pages_per_frame> bpm("test", reset);
+  storage::BufferPoolManager<pages_per_frame> bpm("test.db", reset);
   storage::page_id_t root_page_id = storage::INVALID_PAGE_ID;
   storage::BPlusTree<storage::hash_t, int> bpt(&bpm, root_page_id);
   char command;
@@ -109,7 +110,7 @@ void storage_test(bool force_reset = false) {
     reset = !file.good();
   }
   static constexpr int pages_per_frame = storage::BPT_PAGES_PER_FRAME;
-  storage::BufferPoolManager<pages_per_frame> bpm("test2", reset);
+  storage::BufferPoolManager<pages_per_frame> bpm("test2.db", reset);
   int &bpt_root = bpm.GetInfo(1);
   if (reset) {
     bpt_root = storage::INVALID_PAGE_ID;

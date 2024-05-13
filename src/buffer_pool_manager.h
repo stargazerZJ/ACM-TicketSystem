@@ -49,7 +49,7 @@ class BufferPoolManager {
   public:
     explicit BufferPoolManager(const std::string &file_path,
                                bool reset,
-                               size_t pool_size = BUFFER_POOL_SIZE) : disk_(file_path + ".db", reset),
+                               size_t pool_size = BUFFER_POOL_SIZE) : disk_(file_path, reset),
                                                                       replacer_(pool_size), pool_size_(pool_size),
                                                                       buffer_(pool_size), free_list_(pool_size) {
       std::iota(free_list_.begin(), free_list_.end(), 0);
