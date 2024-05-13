@@ -23,7 +23,7 @@ class VarLengthStore {
     using BasicFrameGuard = BufferPoolManager<PagesPerFrame>::BasicFrameGuard;
 
     template<var_length_object T>
-    class Handle<T>;
+    class Handle;
 
     explicit VarLengthStore(BufferPoolManager<PagesPerFrame> *bpm, record_id_t &top_pos);
 
@@ -43,7 +43,7 @@ class VarLengthStore {
     constexpr auto GetObjectSize(length_t n = 0) { return GetBaseSize<T>() + n * GetDataSize<T>(); }
 
     template<var_length_object T>
-    class Handle<T> {
+    class Handle {
       public:
         Handle() = default;
 
@@ -88,6 +88,7 @@ auto VarLengthStore::Allocate(length_t n) -> Handle<T> {
 }
 template<var_length_object T>
 auto VarLengthStore::Get(const record_id_t &pos) -> Handle<T> {
+	ASSERT(pos != INVALID_RECORD_ID);
   auto page_id = GetPageId(pos);
   auto offset = pos % kFrameSize;
   BasicFrameGuard guard = bpm_->FetchFrameBasic(page_id);

@@ -19,6 +19,7 @@ static constexpr int BPT_MAX_DEGREE = std::numeric_limits<int>::max(); // For te
 static constexpr int BPT_PAGES_PER_FRAME = 1;
 
 using record_id_t = int32_t;
+static constexpr record_id_t INVALID_RECORD_ID = -1;
 static constexpr int VLS_PAGES_PER_FRAME = 1;
 
 using hash_t = uint64_t;
