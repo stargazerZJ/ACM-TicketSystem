@@ -7,8 +7,9 @@
 #include <cctype>
 #include <cstdio>
 #include <concepts>
+#include <string>
 
-namespace fastio {
+namespace utils {
 
 class FastIO {
  public:

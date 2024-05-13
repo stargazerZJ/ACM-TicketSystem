@@ -6,6 +6,8 @@
 #include "b_plus_tree.h"
 #include "config.h"
 #include <iostream>
+#include <parser.h>
+
 #include "fastio.h"
 #include "hash.h"
 #include "utility.h"
@@ -24,7 +26,8 @@ void bpt_frame_test() {
   using leaf_frame4 = storage::BPlusTreeLeafFrame<char, char, 2>;
   std::cout << "Size of a frame with 2 pages: " << storage::Frame<2>::kFrameSize << std::endl;
   std::cout << "Size of BPlusTreeInternalFrame<hash_t, page_id_t, 2>: " << sizeof(internal_frame2) << std::endl;
-  std::cout << "Max Size of BPlusTreeInternalFrame<hash_t, page_id_t, 2>: " << internal_frame2::GetMaxSize() << std::endl;
+  std::cout << "Max Size of BPlusTreeInternalFrame<hash_t, page_id_t, 2>: " << internal_frame2::GetMaxSize() <<
+      std::endl;
   std::cout << "(8192 - 8 - 4) / (8 + 4) " << (8192 - 4 - 4) / (8 + 4) << std::endl;
   std::cout << "Size of BPlusTreeLeafFrame<hash_t, int, 2>: " << sizeof(leaf_frame3) << std::endl;
   std::cout << "Size of BPlusTreeLeafFrame<char, char, 2>: " << sizeof(leaf_frame4) << std::endl;
@@ -72,11 +75,11 @@ void bpt_test() {
         }
         break;
       }
-      default:std::cerr << "Unknown command: " << command << std::endl;
+      default: std::cerr << "Unknown command: " << command << std::endl;
     }
     if (command != 'F' && i % 100 == 0) {
-//      std::cerr << "Print B+ tree after operation " << i << ": " << command << " " << key << std::endl;
-//      bpt.Print();
+      //      std::cerr << "Print B+ tree after operation " << i << ": " << command << " " << key << std::endl;
+      //      bpt.Print();
       // if (!bpt.Validate()) {
       //   std::cerr << "Validation failed after " << i << " operations" << std::endl;
       //   break;
@@ -114,7 +117,7 @@ void storage_test(bool force_reset = false) {
   storage::BPlusTree<storage::PackedPair<storage::hash_t, int>, char> bpt(&bpm, bpt_root);
   storage::Hash hash;
   int n;
-  using IO = fastio::FastIO;
+  using IO = utils::FastIO;
   IO::read(n);
   for (int i = 0; i < n; ++i) {
     std::string cmd, key_str;
@@ -143,13 +146,24 @@ void storage_test(bool force_reset = false) {
 }
 
 void pair_test() {
-//  std::cout << "Size of TrivialPair: " << sizeof (TrivialPair) << std::endl; // 16
-  std::cout << "Size of PackedPair: " << sizeof (storage::PackedPair<storage::hash_t, int>) << std::endl; // 12
+  //  std::cout << "Size of TrivialPair: " << sizeof (TrivialPair) << std::endl; // 16
+  std::cout << "Size of PackedPair: " << sizeof(storage::PackedPair<storage::hash_t, int>) << std::endl; // 12
+}
+
+void parser_test() {
+  std::string input = "[1623456789] command -a こんにちは -b value2";
+  try {
+    auto [command, args] = utils::Parser::Read(input);
+    std::cout << "Command: " << command << '\n';
+    std::cout << "Timestamp: " << args.GetTimestamp() << '\n';
+    std::cout << "Flag -a: " << args.GetFlag('a') << '\n';
+    std::cout << "Flag -b: " << args.GetFlag('b') << '\n';
+  } catch (const std::invalid_argument &e) {
+    std::cerr << "Error: " << e.what() << '\n';
+  }
 }
 
 int main() {
-  // bpt_frame_test();
-  bpt_test();
-  // storage_test(true);
+  parser_test();
   return 0;
 }
