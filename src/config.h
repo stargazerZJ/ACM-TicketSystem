@@ -18,6 +18,9 @@ static constexpr page_id_t INVALID_PAGE_ID = -1;
 static constexpr int BPT_MAX_DEGREE = std::numeric_limits<int>::max(); // For testing purpose, will have no effect if set to infinity
 static constexpr int BPT_PAGES_PER_FRAME = 1;
 
+using record_id_t = int32_t;
+static constexpr int VLS_PAGES_PER_FRAME = 1;
+
 using hash_t = uint64_t;
 
 static constexpr int LRU_REPLACER_K = 10;
