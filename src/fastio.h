@@ -13,8 +13,10 @@ namespace utils {
 
 class FastIO {
  public:
-  static auto read(auto &&...a) { return ((READ(a)), ...); }
-  static auto write(auto &&...a) { return ((WRITE(a)), ...); }
+  static auto Read(auto &&...a) { return ((READ(a)), ...); }
+  static auto Write(auto &&...a) { return ((WRITE(a)), ...); }
+  static void WriteSuccess() { Write("0\n"); }
+  static void WriteFailure() { Write("-1\n"); }
  private:
   static void READ(std::integral auto &a) {
     int fl = 1;

@@ -11,7 +11,14 @@ void TicketSystemCLI::run() {
   std::string line;
   while (std::getline(std::cin, line)) {
     auto [command, args] = utils::Parser::Read(line);
-    // run command
+#define ROUTE(cmd) if (command == #cmd) { cmd(args); continue; }
+    ROUTE(add_user);
+#undef ROUTE
   }
+}
+void TicketSystemCLI::add_user(const utils::Args& args) {
+  ticket_system_->AddUser(args.GetFlag('c'), args.GetFlag('u'), args.GetFlag('p'),
+                          args.GetFlag('n'), args.GetFlag('m'),
+                          std::stoi(args.GetFlag('g')));
 }
 } // namespace business

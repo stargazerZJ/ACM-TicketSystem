@@ -16,5 +16,7 @@ class TicketSystemCLI {
   private:
     // using Func = void (TicketSystemCLI::*)(const utils::Args &args);
   std::unique_ptr<TicketSystem> ticket_system_;
+
+  void add_user(const utils::Args &args);
 };
 } // namespace business

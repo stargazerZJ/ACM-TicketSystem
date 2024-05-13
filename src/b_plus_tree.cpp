@@ -7,10 +7,11 @@
 
 namespace storage {
 template<typename KeyType, typename ValueType>
-BPlusTree<KeyType, ValueType>::BPlusTree(BufferPoolManager<PagesPerFrame> *bpm, page_id_t &root_page_id)
+BPlusTree<KeyType, ValueType>::BPlusTree(BufferPoolManager<PagesPerFrame> *bpm, page_id_t &root_page_id, bool reset)
   : bpm_(bpm), root_page_id_(root_page_id) {
   static_assert(sizeof(InternalFrame) <= Frame<PagesPerFrame>::kFrameSize);
   static_assert(sizeof(LeafFrame) <= Frame<PagesPerFrame>::kFrameSize);
+  if (reset) root_page_id = INVALID_PAGE_ID;
 }
 template<typename KeyType, typename ValueType>
 auto BPlusTree<KeyType, ValueType>::CreateRootFrame() -> BasicFrameGuard {

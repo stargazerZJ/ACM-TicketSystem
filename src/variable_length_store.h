@@ -25,7 +25,9 @@ class VarLengthStore {
     template<var_length_object T>
     class Handle;
 
-    explicit VarLengthStore(BufferPoolManager<PagesPerFrame> *bpm, record_id_t &top_pos);
+    explicit VarLengthStore(BufferPoolManager<PagesPerFrame> *bpm, record_id_t &top_pos, bool reset = false) : bpm_(bpm), top_pos_(top_pos) {
+      if (reset) top_pos = 0;
+    }
 
     template<var_length_object T>
     auto Allocate(length_t n = 0) -> Handle<T>;
@@ -47,17 +49,20 @@ class VarLengthStore {
       public:
         Handle() = default;
 
-        auto Get() -> const T * { return reinterpret_cast<T *>(guard_.GetData() + pos_); }
+        auto Get() const -> const T * { return reinterpret_cast<T *>(guard_.GetData() + pos_); }
         auto GetMut() -> T * { return reinterpret_cast<T *>(guard_.GetDataMut() + pos_); }
+        auto RecordID() const -> record_id_t { return guard_.PageId() * kFrameSize + pos_; }
 
-        auto operator ->() -> const T * { return Get(); }
-        auto operator *() -> const T & { return *Get(); }
+        auto operator ->() -> T * { return GetMut(); }
+        auto operator ->() const -> const T * { return Get(); }
+        auto operator *() -> T & { return *GetMut(); }
+        auto operator *() const -> const T & { return *Get(); }
 
       private:
         BasicFrameGuard guard_{};
         length_t pos_{0};
 
-        Handle(BasicFrameGuard guard, length_t pos) : guard_(std::move(guard)), pos_(pos) {
+        Handle(BasicFrameGuard guard, length_t record_id) : guard_(std::move(guard)), pos_(record_id % kFrameSize) {
         }
     };
 

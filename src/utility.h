@@ -42,3 +42,12 @@ ForwardIt upper_bound(ForwardIt first, ForwardIt last, const T& value) {
 }
 
 } // namespace storage
+
+namespace utils {
+inline void set_field(char *dest, std::string_view src, size_t size) {
+  size_t len = std::min(src.size(), size);
+  std::copy_n(src.begin(), len, dest);
+  std::fill(dest + len, dest + size, '\0');
+}
+
+} // namespace utils

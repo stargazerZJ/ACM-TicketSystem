@@ -27,6 +27,6 @@ using hash_t = uint64_t;
 static constexpr int LRU_REPLACER_K = 10;
 static constexpr int BUFFER_POOL_SIZE = 1000;
 
-static constexpr char db_file_name[] = "db.bin";
+static constexpr char DB_FILE_NAME[] = "db.bin";
 
 } // namespace storage

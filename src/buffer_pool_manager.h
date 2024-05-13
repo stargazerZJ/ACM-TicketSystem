@@ -99,6 +99,7 @@ class BufferPoolManager {
         }
 
         auto PageId() -> page_id_t { return frame_->GetPageId(); }
+        auto PageId() const -> page_id_t { return frame_->GetPageId(); }
         auto GetData() -> char * { return frame_->GetData(); }
         auto GetData() const -> const char * { return frame_->GetData(); }
         auto GetDataMut() -> char * {

@@ -21,7 +21,7 @@ class BPlusTree {
   using BasicFrameGuard = BufferPoolManager<PagesPerFrame>::BasicFrameGuard;
   class PositionHint;
 
-  explicit BPlusTree(BufferPoolManager<PagesPerFrame> *bpm, page_id_t &root_page_id);
+  explicit BPlusTree(BufferPoolManager<PagesPerFrame> *bpm, page_id_t &root_page_id, bool reset = false);
 
   auto Insert(const KeyType &key, const ValueType &value) -> bool;
 

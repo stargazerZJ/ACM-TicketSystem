@@ -119,29 +119,29 @@ void storage_test(bool force_reset = false) {
   storage::Hash hash;
   int n;
   using IO = utils::FastIO;
-  IO::read(n);
+  IO::Read(n);
   for (int i = 0; i < n; ++i) {
     std::string cmd, key_str;
-    IO::read(cmd, key_str);
+    IO::Read(cmd, key_str);
     auto key_hash = hash(key_str);
     if (cmd == "insert") {
       int value;
-      IO::read(value);
+      IO::Read(value);
       bpt.Insert({key_hash, value}, 'a');
     } else if (cmd == "delete") {
       int value;
-      IO::read(value);
+      IO::Read(value);
       bpt.Remove({key_hash, value});
     } else if (cmd == "find") {
       char value = 'a';
       auto result = bpt.PartialSearch(key_hash);
       for (const auto &item : result) {
-        IO::write(item.first.second, ' ');
+        IO::Write(item.first.second, ' ');
       }
-      if (result.empty()) IO::write("null");
-      IO::write('\n');
+      if (result.empty()) IO::Write("null");
+      IO::Write('\n');
     } else {
-      IO::write("Unknown command: ", cmd, '\n');
+      IO::Write("Unknown command: ", cmd, '\n');
     }
   }
 }
