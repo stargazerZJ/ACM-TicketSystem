@@ -25,7 +25,7 @@ class Args {
   public:
     Args() = default;
 
-    auto GetFlag(char name) -> const std::string_view {
+    auto GetFlag(char name) -> std::string_view {
       ASSERT(name >= 'a' && name <= 'z');
       return flags[name - 'a'];
     }

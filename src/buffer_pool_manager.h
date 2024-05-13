@@ -49,8 +49,9 @@ class BufferPoolManager {
   public:
     explicit BufferPoolManager(const std::string &file_path,
                                bool reset,
-                               size_t pool_size = BUFFER_POOL_SIZE) : disk_(file_path, reset),
-                                                                      replacer_(pool_size), pool_size_(pool_size),
+                               size_t pool_size = BUFFER_POOL_SIZE) : pool_size_(pool_size),
+                                                                      disk_(file_path, reset),
+                                                                      replacer_(pool_size),
                                                                       buffer_(pool_size), free_list_(pool_size) {
       std::iota(free_list_.begin(), free_list_.end(), 0);
     }
@@ -132,14 +133,16 @@ class BufferPoolManager {
     auto NewFrameGuarded(page_id_t *page_id = nullptr) -> BasicFrameGuard;
     auto FetchFrameBasic(page_id_t page_id) -> BasicFrameGuard;
     int &GetInfo(int n) { return disk_.GetInfo(n); }
+    int &AllocateInfo() { return disk_.GetInfo(++info_count_); }
 
   private:
     using frame_id_t = LRUKReplacer::frame_id_t;
+    int info_count_{0};
     const size_t pool_size_;
     DiskManager<PagesPerFrame> disk_;
     LRUKReplacer replacer_;
     std::unordered_map<page_id_t, frame_id_t> page_table_;
-    std::vector<Frame<PagesPerFrame>> buffer_;
+    std::vector<Frame<PagesPerFrame> > buffer_;
     std::vector<frame_id_t> free_list_;
 
     auto FetchFrame(page_id_t page_id) -> Frame<PagesPerFrame> *;
@@ -242,5 +245,4 @@ void BufferPoolManager<PagesPerFrame>::FlushAllFrames() {
     }
   }
 }
-
 } // namespace storage
