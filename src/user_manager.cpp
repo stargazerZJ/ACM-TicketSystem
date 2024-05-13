@@ -5,9 +5,4 @@
 #include "user_manager.h"
 
 namespace business {
-
-class UserManager {
-
-};
-
 } // namespace business

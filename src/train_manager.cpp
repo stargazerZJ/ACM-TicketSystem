@@ -5,9 +5,4 @@
 #include "train_manager.h"
 
 namespace business {
-
-class TrainManager {
-
-};
-
 } // namespace business

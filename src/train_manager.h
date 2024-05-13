@@ -5,4 +5,9 @@
 #pragma once
 
 namespace business {
+
+class TrainManager {
+
+};
+
 } // namespace business
