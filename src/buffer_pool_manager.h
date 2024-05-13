@@ -10,7 +10,6 @@
 
 #include "config.h"
 #include "disk_manager.h"
-#include "external_memory/external_memory.h"
 
 namespace storage {
 /**
