@@ -39,7 +39,7 @@ void bpt_test() {
    * <value>: int
    */
   bool reset = true;
-  static constexpr int pages_per_frame = storage::BPlusTree<int, int>::PagesPerFrame;
+  static constexpr int pages_per_frame = storage::BPT_PAGES_PER_FRAME;
   storage::BufferPoolManager<pages_per_frame> bpm("test", reset);
   storage::page_id_t root_page_id = storage::INVALID_PAGE_ID;
   storage::BPlusTree<storage::hash_t, int> bpt(&bpm, root_page_id);
@@ -105,7 +105,7 @@ void storage_test(bool force_reset = false) {
     std::ifstream file("test2.db");
     reset = !file.good();
   }
-  static constexpr int pages_per_frame = storage::BPlusTree<int, int>::PagesPerFrame;
+  static constexpr int pages_per_frame = storage::BPT_PAGES_PER_FRAME;
   storage::BufferPoolManager<pages_per_frame> bpm("test2", reset);
   int &bpt_root = bpm.GetInfo(1);
   if (reset) {
@@ -148,6 +148,8 @@ void pair_test() {
 }
 
 int main() {
-  storage_test(false);
+  // bpt_frame_test();
+  bpt_test();
+  // storage_test(true);
   return 0;
 }
