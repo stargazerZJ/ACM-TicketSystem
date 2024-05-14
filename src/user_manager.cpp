@@ -46,6 +46,13 @@ void UserManager::Login(std::string_view username, std::string_view password) {
                                      handle->privilege};
   utils::FastIO::WriteSuccess();
 }
+void UserManager::Logout(std::string_view username) {
+  auto username_hash = storage::Hash()(username);
+  if (logged_in_users_.erase(username_hash) == 0) {
+    return utils::FastIO::WriteFailure();
+  }
+  utils::FastIO::WriteSuccess();
+}
 int8_t UserManager::GetLoggedInUserPrivilege(storage::hash_t username) {
   auto it = logged_in_users_.find(username);
   if (it == logged_in_users_.end()) return -1;

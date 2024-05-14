@@ -37,6 +37,7 @@ class UserManager {
   void AddUser(std::string_view cur_user, std::string_view username, std::string_view password, std::string_view real_name, std::string_view email, int8_t privilege);
 
   void Login(std::string_view username, std::string_view password);
+  void Logout(std::string_view username);
 
   private:
     storage::VarLengthStore *vls_;
