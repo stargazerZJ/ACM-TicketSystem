@@ -15,6 +15,9 @@ namespace storage {
 template<class T>
 concept var_length_object = requires(T t) { typename T::data_t; };
 
+template<var_length_object T>
+concept var_length_array = requires(T t) { T::zero_base_size; };
+
 class VarLengthStore {
   public:
     static constexpr int PagesPerFrame = VLS_PAGES_PER_FRAME;
@@ -36,7 +39,7 @@ class VarLengthStore {
     auto Get(const record_id_t &pos) -> Handle<T>;
 
     template<var_length_object T>
-    constexpr auto GetBaseSize() { return sizeof(T); }
+    constexpr auto GetBaseSize() { return var_length_array<T> ? 0 : sizeof(T); }
 
     template<var_length_object T>
     constexpr auto GetDataSize() { return sizeof(typename T::data_t); }

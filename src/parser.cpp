@@ -38,3 +38,19 @@ std::pair<utils::Parser::Command, utils::Args> utils::Parser::Read(const std::st
 
   return std::make_pair(std::move(command), std::move(args));
 }
+utils::Parser::DelimitedStrIterator& utils::Parser::DelimitedStrIterator::
+operator++() {
+  if (end_ == std::string_view::npos) {
+    start_ = std::string_view::npos;
+  } else {
+    start_ = end_ + 1;
+    end_ = src_.find(delimiter, start_);
+  }
+  return *this;
+}
+std::string_view utils::Parser::DelimitedStrIterator::operator*() const {
+  if (start_ == std::string_view::npos) {
+    return {};
+  }
+  return src_.substr(start_, (end_ == std::string_view::npos) ? end_ : end_ - start_);
+}

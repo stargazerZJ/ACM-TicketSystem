@@ -10,6 +10,7 @@
 
 namespace business {
 struct UserProfile {
+  DELETE_CONSTRUCTOR_AND_DESTRUCTOR(UserProfile);
   using data_t = char;
   int order_count;
   // char username[30]; // no need to store username in user profile
@@ -29,7 +30,7 @@ struct UserData {
 
 class UserManager {
   public:
-    UserManager(storage::BufferPoolManager<storage::VLS_PAGES_PER_FRAME> *bpm,
+    UserManager(storage::BufferPoolManager<storage::BPT_PAGES_PER_FRAME> *bpm,
                 storage::VarLengthStore *vls,
                 bool reset) : vls_(vls), user_id_index_(bpm, bpm->AllocateInfo(), reset) {
     }
@@ -42,7 +43,7 @@ class UserManager {
   void ModifyProfile(std::string_view cur_user, std::string_view username, std::string_view password, std::string_view real_name, std::string_view email, int8_t privilege);
 
   private:
-    storage::VarLengthStore *vls_;
+    storage::VarLengthStore *vls_; // stores UserProfile
 
   protected:
     std::unordered_map<storage::hash_t, UserData> logged_in_users_{};

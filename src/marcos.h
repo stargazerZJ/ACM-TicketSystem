@@ -11,3 +11,5 @@
 #else
 #define ASSERT(expr)
 #endif
+
+#define DELETE_CONSTRUCTOR_AND_DESTRUCTOR(class_name) class_name() = delete;  ~class_name() = delete;
