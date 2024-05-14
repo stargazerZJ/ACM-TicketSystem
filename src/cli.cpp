@@ -7,6 +7,14 @@
 #include <iostream>
 
 namespace business {
+TicketSystemCLI::TicketSystemCLI(bool force_reset) {
+  bool reset = force_reset;
+  if (!reset) {
+    std::ifstream file(storage::DB_FILE_NAME);
+    reset = !file.good();
+  }
+  ticket_system_ = std::make_unique<TicketSystem>(storage::DB_FILE_NAME, reset);
+}
 void TicketSystemCLI::run() {
   std::string line;
   while (std::getline(std::cin, line)) {
@@ -61,5 +69,11 @@ void TicketSystemCLI::modify_profile(const utils::Args& args) {
   ticket_system_->ModifyProfile(args.GetFlag('c'), args.GetFlag('u'),
                                 args.GetFlag('p'), args.GetFlag('n'),
                                 args.GetFlag('m'), privilege);
+}
+void TicketSystemCLI::clean(const utils::Args& args) {
+  ticket_system_ = std::make_unique<TicketSystem>(storage::DB_FILE_NAME, true);
+}
+void TicketSystemCLI::exit(const utils::Args& args) {
+  utils::FastIO::Write("bye\n");
 }
 } // namespace business
