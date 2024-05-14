@@ -52,4 +52,8 @@ inline bool cmp_field(const char *dest, std::string_view src, size_t size) {
   size_t len = std::min(src.size(), size);
   return std::equal(src.begin(), src.begin() + len, dest);
 }
+inline std::string_view get_field(const char *src, size_t size) {
+  // terminate at '\0' or size
+  return std::string_view(src, std::find(src, src + size, '\0') - src);
+}
 } // namespace utils
