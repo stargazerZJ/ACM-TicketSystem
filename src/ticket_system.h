@@ -14,16 +14,22 @@
 #include "train_manager.h"
 
 namespace business {
-class TicketSystem : public UserManager, public TicketManager, public TrainManager {
-  public:
-    explicit TicketSystem(const std::string &db_file_name, bool reset = false) : db_file_name(db_file_name),
-      bpm_(db_file_name, reset), vls_(&bpm_, bpm_.AllocateInfo(), reset), UserManager(&bpm_, &vls_, reset), TicketManager(&bpm_, &vls_, reset),
-      TrainManager(&bpm_, &vls_, reset) {
+class TicketSystemBase {
+  protected:
+    TicketSystemBase(const std::string &db_file_name, bool reset)
+      : db_file_name_(db_file_name), bpm_(db_file_name, reset), vls_(&bpm_, bpm_.AllocateInfo(), reset) {
     }
 
-  private:
-    const std::string db_file_name;
+    const std::string db_file_name_;
     storage::BufferPoolManager<1> bpm_;
     storage::VarLengthStore vls_;
+};
+class TicketSystem : public TicketSystemBase, public UserManager, public TicketManager, public TrainManager {
+  public:
+    explicit TicketSystem(const std::string &db_file_name, bool reset = false) : TicketSystemBase(db_file_name, reset),
+      UserManager(&bpm_, &(TicketSystemBase::vls_), reset),
+      TicketManager(&bpm_, &(TicketSystemBase::vls_), reset),
+      TrainManager(&bpm_, &(TicketSystemBase::vls_), reset) {
+    }
 };
 } // namespace business

@@ -35,7 +35,8 @@ void UserManager::AddUser(std::string_view cur_user,
 void UserManager::Login(std::string_view username, std::string_view password) {
   auto username_hash = storage::Hash()(username);
   storage::record_id_t user_id;
-  if (!user_id_index_.GetValue(username_hash, &user_id)) {
+  if (logged_in_users_.contains(username_hash)
+    || !user_id_index_.GetValue(username_hash, &user_id)) {
     return utils::FastIO::WriteFailure();
   }
   const auto handle = vls_->Get<UserProfile>(user_id);
@@ -73,8 +74,10 @@ void UserManager::QueryProfile(std::string_view cur_user,
   // Query successful: output one line,
   // the `<username>`, `<name>`, `<mailAddr>` and `<privilege>`
   // of the user being queried, separated by a space.
-  utils::FastIO::Write(username, ' ', handle->real_name, ' ', handle->email,
-                       ' ', handle->privilege, '\n');
+  utils::FastIO::Write(username, ' ',
+                       utils::get_field(handle->real_name, 15), ' ',
+                       utils::get_field(handle->email, 30), ' ',
+                       handle->privilege, '\n');
 }
 void UserManager::ModifyProfile(std::string_view cur_user,
                                 std::string_view username,
@@ -108,8 +111,10 @@ void UserManager::ModifyProfile(std::string_view cur_user,
   if (privilege != -1) {
     handle->privilege = privilege;
   }
-  utils::FastIO::Write(username, ' ', handle->real_name, ' ', handle->email,
-                       ' ', handle->privilege, '\n');
+  utils::FastIO::Write(username, ' ',
+                       utils::get_field(handle->real_name, 15), ' ',
+                       utils::get_field(handle->email, 30), ' ',
+                       handle->privilege, '\n');
 }
 int8_t UserManager::GetLoggedInUserPrivilege(storage::hash_t username) {
   auto it = logged_in_users_.find(username);
