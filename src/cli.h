@@ -76,6 +76,14 @@ class TicketSystemCLI {
 
     /// @brief format: [timestamp] exit
     /// @return void, outputs "bye"
-    void exit(const utils::Args &args);
+    static void exit(const utils::Args &args);
+
+  private:
+    // using Func = void (TicketSystemCLI::*)(const utils::Args &args);
+    std::unique_ptr<TicketSystem> ticket_system_;
+
+  static void WriteTimestamp(const utils::Args &args) {
+    utils::FastIO::Write('[', args.GetTimestamp(), ']', ' ');
+  }
 };
 } // namespace business

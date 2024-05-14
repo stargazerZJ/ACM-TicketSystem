@@ -11,24 +11,25 @@ void TicketSystemCLI::run() {
   std::string line;
   while (std::getline(std::cin, line)) {
     auto [command, args] = utils::Parser::Read(line);
-#define ROUTE(cmd) if (command == #cmd) { cmd(args); continue; }
+#define ROUTE(cmd) if (command == #cmd) { WriteTimestamp(args); cmd(args); continue; }
     ROUTE(add_user);
     ROUTE(login);
     ROUTE(logout);
     ROUTE(query_profile);
     ROUTE(modify_profile);
-    ROUTE(add_train);
-    ROUTE(delete_train);
-    ROUTE(release_train);
-    ROUTE(query_train);
-    ROUTE(query_ticket);
-    ROUTE(query_transfer);
-    ROUTE(buy_ticket);
-    ROUTE(query_order);
-    ROUTE(refund_ticket);
+    // ROUTE(add_train);
+    // ROUTE(delete_train);
+    // ROUTE(release_train);
+    // ROUTE(query_train);
+    // ROUTE(query_ticket);
+    // ROUTE(query_transfer);
+    // ROUTE(buy_ticket);
+    // ROUTE(query_order);
+    // ROUTE(refund_ticket);
     ROUTE(clean);
 #undef ROUTE
     if (command == "exit") {
+      WriteTimestamp(args);
       exit(args);
       break;
     }
@@ -36,7 +37,9 @@ void TicketSystemCLI::run() {
   }
 }
 void TicketSystemCLI::add_user(const utils::Args& args) {
-  int8_t privilege = args.GetFlag('g').empty() ? 10 : args.GetFlag('g')[0] - 'a';
+  int8_t privilege = args.GetFlag('g').empty()
+                       ? 10
+                       : args.GetFlag('g')[0] - '0';
   ticket_system_->AddUser(args.GetFlag('c'), args.GetFlag('u'),
                           args.GetFlag('p'),
                           args.GetFlag('n'), args.GetFlag('m'),
@@ -52,7 +55,9 @@ void TicketSystemCLI::query_profile(const utils::Args& args) {
   ticket_system_->QueryProfile(args.GetFlag('c'), args.GetFlag('u'));
 }
 void TicketSystemCLI::modify_profile(const utils::Args& args) {
-  int8_t privilege = args.GetFlag('g').empty() ? -1 : args.GetFlag('g')[0] - 'a';
+  int8_t privilege = args.GetFlag('g').empty()
+                       ? -1
+                       : args.GetFlag('g')[0] - '0';
   ticket_system_->ModifyProfile(args.GetFlag('c'), args.GetFlag('u'),
                                 args.GetFlag('p'), args.GetFlag('n'),
                                 args.GetFlag('m'), privilege);
