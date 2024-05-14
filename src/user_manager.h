@@ -38,6 +38,8 @@ class UserManager {
 
   void Login(std::string_view username, std::string_view password);
   void Logout(std::string_view username);
+  void QueryProfile(std::string_view cur_user, std::string_view username);
+  void ModifyProfile(std::string_view cur_user, std::string_view username, std::string_view password, std::string_view real_name, std::string_view email, int8_t privilege);
 
   private:
     storage::VarLengthStore *vls_;

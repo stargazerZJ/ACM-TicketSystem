@@ -36,7 +36,7 @@ void TicketSystemCLI::run() {
   }
 }
 void TicketSystemCLI::add_user(const utils::Args& args) {
-  auto privilege = args.GetFlag('g').empty() ? 10 : args.GetFlag('g')[0] - 'a';
+  int8_t privilege = args.GetFlag('g').empty() ? 10 : args.GetFlag('g')[0] - 'a';
   ticket_system_->AddUser(args.GetFlag('c'), args.GetFlag('u'),
                           args.GetFlag('p'),
                           args.GetFlag('n'), args.GetFlag('m'),
@@ -47,5 +47,14 @@ void TicketSystemCLI::login(const utils::Args& args) {
 }
 void TicketSystemCLI::logout(const utils::Args& args) {
   ticket_system_->Logout(args.GetFlag('u'));
+}
+void TicketSystemCLI::query_profile(const utils::Args& args) {
+  ticket_system_->QueryProfile(args.GetFlag('c'), args.GetFlag('u'));
+}
+void TicketSystemCLI::modify_profile(const utils::Args& args) {
+  int8_t privilege = args.GetFlag('g').empty() ? -1 : args.GetFlag('g')[0] - 'a';
+  ticket_system_->ModifyProfile(args.GetFlag('c'), args.GetFlag('u'),
+                                args.GetFlag('p'), args.GetFlag('n'),
+                                args.GetFlag('m'), privilege);
 }
 } // namespace business
