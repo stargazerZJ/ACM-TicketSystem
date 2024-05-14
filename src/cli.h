@@ -11,11 +11,8 @@
 namespace business {
 class TicketSystemCLI {
   public:
+    explicit TicketSystemCLI(bool force_reset = false);
     void run();
-
-  private:
-    // using Func = void (TicketSystemCLI::*)(const utils::Args &args);
-    std::unique_ptr<TicketSystem> ticket_system_;
 
     /// @brief format: [timestamp] add_user -c <cur_username> -u <username> -p <password> -n <name> -m <mailAddr> -g <privilege>
     /// @return void, outputs 0 on success, -1 on failure
