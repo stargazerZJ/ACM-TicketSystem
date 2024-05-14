@@ -25,6 +25,8 @@ class BPlusTree {
 
   auto Insert(const KeyType &key, const ValueType &value) -> bool;
 
+  auto Emplace(const KeyType &key, auto value_generator) -> bool;
+
   auto Remove(const KeyType &key) -> bool;
 
   auto GetValue(const KeyType &key, ValueType *value = nullptr) -> PositionHint;
@@ -126,7 +128,8 @@ class BPlusTree {
   auto KeyIndex(const KeyType &key, auto *frame) -> int;
   auto FindLeafFrame(const KeyType &key) -> Context;
   static void MoveData(auto *array, size_t begin, size_t end, int offset); // [begin, end)
-  auto InsertInLeaf(const KeyType &key, const ValueType &value, Context &context) -> void;
+  void InsertInLeaf(const KeyType &key, const ValueType &value, Context &ctx);
+  auto InsertInLeafPlain(const KeyType &key, const ValueType &value, Context &context) -> void;
   auto InsertInInternal(const KeyType &key, page_id_t new_page_id, Context &context) -> void;
   auto InsertInParent(page_id_t old_page_id,
                       const KeyType &key,

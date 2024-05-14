@@ -22,22 +22,12 @@ auto BPlusTree<KeyType, ValueType>::CreateRootFrame() -> BasicFrameGuard {
 }
 
 template<typename KeyType, typename ValueType>
-auto BPlusTree<KeyType, ValueType>::Insert(const KeyType &key, const ValueType &value) -> bool {
-  Context ctx = FindLeafFrame(key);
-  if (ctx.stack_.empty()) {
-    ctx.current_frame_ = CreateRootFrame();
-    ctx.root_page_id_ = ctx.current_frame_.PageId();
-    ctx.stack_.emplace_back(ctx.root_page_id_, 0);
-  } {
-    auto leaf = ctx.current_frame_.template As<LeafFrame>();
-    if (ctx.stack_.back().Index() <= leaf->GetSize() &&
-      leaf->KeyAt(ctx.stack_.back().Index()) == key) {
-      return false;
-    }
-  }
+void BPlusTree<KeyType, ValueType>::InsertInLeaf(const KeyType &key,
+                                                 const ValueType &value,
+                                                 typename ::storage::BPlusTree<KeyType, ValueType>::Context &ctx) {
   auto leaf = ctx.current_frame_.template AsMut<LeafFrame>();
   if (leaf->GetSize() < LeafFrame::GetMaxSize()) {
-    InsertInLeaf(key, value, ctx);
+    InsertInLeafPlain(key, value, ctx);
   } else {
     // split
     auto old_page_id = ctx.stack_.back().PageId();
@@ -58,18 +48,52 @@ auto BPlusTree<KeyType, ValueType>::Insert(const KeyType &key, const ValueType &
     new_leaf->SetNextPageId(leaf->GetNextPageId());
     leaf->SetNextPageId(new_leaf_id);
     if (left) {
-      InsertInLeaf(key, value, ctx);
+      InsertInLeafPlain(key, value, ctx);
     } else {
       // switch context to new leaf
       ctx.current_frame_ = std::move(new_leaf_guard);
       auto new_index = ctx.stack_.back().Index() - split_index;
       ctx.stack_.back() = {ctx.current_frame_.PageId(), new_index};
-      InsertInLeaf(key, value, ctx);
+      InsertInLeafPlain(key, value, ctx);
       new_leaf_guard = std::move(ctx.current_frame_);
     }
     new_leaf_guard.Drop();
     InsertInParent(old_page_id, new_leaf->KeyAt(1), new_leaf_id, ctx);
   }
+}
+template<typename KeyType, typename ValueType>
+auto BPlusTree<KeyType, ValueType>::Insert(const KeyType &key, const ValueType &value) -> bool {
+  Context ctx = FindLeafFrame(key);
+  if (ctx.stack_.empty()) {
+    ctx.current_frame_ = CreateRootFrame();
+    ctx.root_page_id_ = ctx.current_frame_.PageId();
+    ctx.stack_.emplace_back(ctx.root_page_id_, 0);
+  } {
+    auto leaf = ctx.current_frame_.template As<LeafFrame>();
+    if (ctx.stack_.back().Index() <= leaf->GetSize() &&
+      leaf->KeyAt(ctx.stack_.back().Index()) == key) {
+      return false;
+    }
+  }
+  InsertInLeaf(key, value, ctx);
+  return true;
+}
+template<typename KeyType, typename ValueType>
+auto BPlusTree<KeyType, ValueType>::Emplace(const KeyType &key, auto value_generator) -> bool {
+  Context ctx = FindLeafFrame(key);
+  if (ctx.stack_.empty()) {
+    ctx.current_frame_ = CreateRootFrame();
+    ctx.root_page_id_ = ctx.current_frame_.PageId();
+    ctx.stack_.emplace_back(ctx.root_page_id_, 0);
+  } {
+    auto leaf = ctx.current_frame_.template As<LeafFrame>();
+    if (ctx.stack_.back().Index() <= leaf->GetSize() &&
+      leaf->KeyAt(ctx.stack_.back().Index()) == key) {
+      return false;
+    }
+  }
+  auto value = value_generator();
+  InsertInLeaf(key, value, ctx);
   return true;
 }
 template<typename KeyType, typename ValueType>
@@ -183,9 +207,9 @@ void BPlusTree<KeyType, ValueType>::MoveData(auto *array, size_t begin, size_t e
   std::memcpy(array + begin + offset, buffer, move_size);
 }
 template<typename KeyType, typename ValueType>
-auto BPlusTree<KeyType, ValueType>::InsertInLeaf(const KeyType &key,
-                                                 const ValueType &value,
-                                                 Context &context) -> void {
+auto BPlusTree<KeyType, ValueType>::InsertInLeafPlain(const KeyType &key,
+                                                      const ValueType &value,
+                                                      Context &context) -> void {
   auto leaf_frame = context.current_frame_.template AsMut<LeafFrame>();
   auto index = context.stack_.back().Index() + 1;
   auto keys = leaf_frame->Keys();
@@ -329,7 +353,7 @@ auto BPlusTree<KeyType, ValueType>::RemoveInLeaf(Context &context) -> void {
       auto value = sibling_frame->ValueAt(sibling_frame->GetSize());
       sibling_frame->IncreaseSize(-1);
       context.stack_.back() = {context.stack_.back().PageId(), 0};
-      InsertInLeaf(key, value, context);
+      InsertInLeafPlain(key, value, context);
       parent_frame->SetKeyAt(parent_index, key);
     }
   } else {
