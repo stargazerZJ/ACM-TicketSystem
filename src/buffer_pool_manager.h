@@ -128,8 +128,8 @@ class BufferPoolManager {
       private:
         BasicFrameGuard(BufferPoolManager *bpm, Frame<PagesPerFrame> *frame) : bpm_(bpm), frame_(frame) {
         }
-        BufferPoolManager *bpm_;
-        Frame<PagesPerFrame> *frame_;
+        BufferPoolManager *bpm_ = nullptr;
+        Frame<PagesPerFrame> *frame_ = nullptr;
     };
     auto NewFrameGuarded(page_id_t *page_id = nullptr) -> BasicFrameGuard;
     auto FetchFrameBasic(page_id_t page_id) -> BasicFrameGuard;
