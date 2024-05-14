@@ -39,17 +39,18 @@ class VarLengthStore {
     constexpr auto GetBaseSize() { return sizeof(T); }
 
     template<var_length_object T>
-    constexpr auto GetDataSize() { return sizeof(T::data_t); }
+    constexpr auto GetDataSize() { return sizeof(typename T::data_t); }
 
     template<var_length_object T>
     constexpr auto GetObjectSize(length_t n = 0) { return GetBaseSize<T>() + n * GetDataSize<T>(); }
 
     template<var_length_object T>
     class Handle {
+      friend class VarLengthStore;
       public:
         Handle() = default;
 
-        auto Get() const -> const T * { return reinterpret_cast<T *>(guard_.GetData() + pos_); }
+        auto Get() const -> const T * { return reinterpret_cast<const T *>(guard_.GetData() + pos_); }
         auto GetMut() -> T * { return reinterpret_cast<T *>(guard_.GetDataMut() + pos_); }
         auto RecordID() const -> record_id_t { return guard_.PageId() * kFrameSize + pos_; }
 
