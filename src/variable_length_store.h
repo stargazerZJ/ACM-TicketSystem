@@ -15,8 +15,8 @@ namespace storage {
 template<class T>
 concept var_length_object = requires(T t) { typename T::data_t; };
 
-template<var_length_object T>
-concept var_length_array = requires(T t) { T::zero_base_size; };
+template<class T>
+concept var_length_array = var_length_object<T> && requires(T t) { T::zero_base_size; };
 
 class VarLengthStore {
   public:
