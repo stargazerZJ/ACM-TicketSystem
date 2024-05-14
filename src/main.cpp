@@ -2,6 +2,8 @@
 // Created by zj on 4/27/2024.
 //
 
+#include <cli.h>
+
 #include "buffer_pool_manager.h"
 #include "b_plus_tree.h"
 #include "config.h"
@@ -165,6 +167,9 @@ void parser_test() {
 }
 
 int main() {
-  parser_test();
+  // storage_test(true);
+  bool force_reset = true;
+  business::TicketSystemCLI cli(force_reset);
+  cli.run();
   return 0;
 }
