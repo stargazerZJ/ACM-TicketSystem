@@ -137,6 +137,8 @@ auto BPlusTree<KeyType, ValueType>::GetRootId() const -> page_id_t {
   return root_page_id_;
 }
 template<typename KeyType, typename ValueType>
+auto BPlusTree<KeyType, ValueType>::Empty() const -> bool { return GetRootId() == INVALID_PAGE_ID; }
+template<typename KeyType, typename ValueType>
 auto BPlusTree<KeyType, ValueType>::SetRootId(page_id_t root_id) -> void {
   root_page_id_ = root_id;
 }

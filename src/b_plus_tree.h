@@ -43,6 +43,8 @@ class BPlusTree {
 
   auto GetRootId() const -> page_id_t;
 
+  auto Empty() const -> bool ;
+
   class PositionHint {
     friend class BPlusTree;
     friend class Iterator;

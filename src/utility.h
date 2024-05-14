@@ -15,13 +15,13 @@ struct PackedPair {
   using second_type = T2;
   T1 first;
   T2 second;
-  bool operator == (const PackedPair &) const = default;
-  auto operator <=> (const PackedPair &) const = default;
+  bool operator ==(const PackedPair &) const = default;
+  auto operator <=>(const PackedPair &) const = default;
 };
 #pragma pack(pop)
 
-template <class ForwardIt, class T>
-ForwardIt upper_bound(ForwardIt first, ForwardIt last, const T& value) {
+template<class ForwardIt, class T>
+ForwardIt upper_bound(ForwardIt first, ForwardIt last, const T &value) {
   // if (first == last) return last;
   unsigned int count = std::distance(first, last) + 1;
   ForwardIt it = first - 1;
@@ -40,7 +40,6 @@ ForwardIt upper_bound(ForwardIt first, ForwardIt last, const T& value) {
   // }
   return it;
 }
-
 } // namespace storage
 
 namespace utils {
@@ -49,5 +48,8 @@ inline void set_field(char *dest, std::string_view src, size_t size) {
   std::copy_n(src.begin(), len, dest);
   std::fill(dest + len, dest + size, '\0');
 }
-
+inline bool cmp_field(const char *dest, std::string_view src, size_t size) {
+  size_t len = std::min(src.size(), size);
+  return std::equal(src.begin(), src.begin() + len, dest);
+}
 } // namespace utils

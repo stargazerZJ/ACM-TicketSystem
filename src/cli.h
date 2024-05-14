@@ -18,5 +18,6 @@ class TicketSystemCLI {
   std::unique_ptr<TicketSystem> ticket_system_;
 
   void add_user(const utils::Args &args);
+  void login(const utils::Args &args);
 };
 } // namespace business
