@@ -76,7 +76,7 @@ class VarLengthStore {
 
     static auto GetPageId(const record_id_t &pos) -> page_id_t { return pos / kFrameSize; }
 
-    static auto GetRemainingSize(const record_id_t &pos) -> length_t { return (kFrameSize - pos) % kFrameSize; }
+    static auto GetRemainingSize(const record_id_t &pos) -> length_t { return (kFrameSize - pos % kFrameSize) % kFrameSize; }
 };
 template<var_length_object T>
 auto VarLengthStore::Allocate(length_t n) -> Handle<T> {

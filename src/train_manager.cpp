@@ -15,17 +15,18 @@ void TrainManager::AddTrain(std::string_view train_name, int8_t station_count,
                             utils::Parser::DelimitedStrIterator stopover_times,
                             utils::Parser::DelimitedStrIterator sell_dates) {
   // 1. Allocate space for the train
-  storage::VarLengthStore::Handle<TrainInfo> train_info;
-  auto generate_train_id = [station_count, &train_info, this] {
+  storage::VarLengthStore::Handle<TrainInfo> train_info_handle;
+  auto generate_train_id = [station_count, &train_info_handle, this] {
     auto size = station_count - 1;
-    train_info = vls_->Allocate<
+    train_info_handle = vls_->Allocate<
       TrainInfo>(size);
-    return train_info.RecordID();
+    return train_info_handle.RecordID();
   };
   if (!train_id_index_.GetOrEmplace(storage::Hash()(train_name),
                                     generate_train_id)) {
-    utils::FastIO::WriteFailure();
+    return utils::FastIO::WriteFailure();
   }
+  TrainInfo* train_info = train_info_handle.GetMut();
   // 2. Fill the train information
   utils::set_field(train_info->train_name, train_name,
                    sizeof(train_info->train_name));
@@ -68,23 +69,23 @@ void TrainManager::DeleteTrain(std::string_view train_name) {
   storage::record_id_t train_id;
   auto train_id_hash = storage::Hash()(train_name);
   if (!train_id_index_.GetValue(train_id_hash, &train_id)) {
-    utils::FastIO::WriteFailure();
+    return utils::FastIO::WriteFailure();
   }
   if (vls_->Get<TrainInfo>(train_id).Get()->IsReleased()) {
-    utils::FastIO::WriteFailure();
+    return utils::FastIO::WriteFailure();
   }
   train_id_index_.Remove(train_id_hash);
   // the VLS does not support deletion, so we just do nothing here
   utils::FastIO::WriteSuccess();
 }
 void TrainManager::ReleaseTrain(std::string_view train_name) {
-  storage::record_id_t train_id;
+  storage::record_id_t train_id = -1;
   if (!train_id_index_.GetValue(storage::Hash()(train_name), &train_id)) {
-    utils::FastIO::WriteFailure();
+    return utils::FastIO::WriteFailure();
   }
   auto train_info = vls_->Get<TrainInfo>(train_id);
   if (train_info->IsReleased()) {
-    utils::FastIO::WriteFailure();
+    return utils::FastIO::WriteFailure();
   }
   // 1. Add vacancy information
   size_t vacancy_size = DATE_BATCH_SIZE * (train_info->station_count - 1);
@@ -104,11 +105,12 @@ void TrainManager::ReleaseTrain(std::string_view train_name) {
 void TrainManager::QueryTrain(std::string_view train_name, date_t date) {
   storage::record_id_t train_id;
   if (!train_id_index_.GetValue(storage::Hash()(train_name), &train_id)) {
-    utils::FastIO::WriteFailure();
+    return utils::FastIO::WriteFailure();
   }
-  const auto train_info = vls_->Get<TrainInfo>(train_id);
+  const auto train_info_handle = vls_->Get<TrainInfo>(train_id);
+  auto train_info = train_info_handle.Get();
   if (!train_info->IsOnSale(date)) {
-    utils::FastIO::WriteFailure();
+    return utils::FastIO::WriteFailure();
   }
   /**
   查询成功：输出共 `(<stationNum> + 1)` 行。
@@ -129,18 +131,22 @@ void TrainManager::QueryTrain(std::string_view train_name, date_t date) {
   for (int8_t i = 0; i < train_info->station_count; ++i) {
     auto station_id = train_info->GetStationId(i);
     const auto station_name = vls_->Get<StationName>(station_id);
-    abs_time_t arrive_time = train_info->GetArriveTime(i, date);
-    abs_time_t leave_time = train_info->GetLeaveTime(i, date);
+    abs_time_t arrive_time = train_info->GetArriveTime(date, i);
+    abs_time_t leave_time = train_info->GetLeaveTime(date, i);
     int price = train_info->GetPrice(i);
     int seat = train_info->seat_count;
-    if (released) {
+    if (released && i != train_info->station_count - 1) {
       seat = vacancy->GetVacancy(train_info->station_count, date, i);
     }
     utils::FastIO::Write(station_name->name, ' ',
                          utils::Parser::DateTimeString(arrive_time), " -> ",
                          utils::Parser::DateTimeString(leave_time), ' ', price,
-                         ' ', seat, '\n');
+                         ' ');
+    if (i != train_info->station_count - 1) {
+      utils::FastIO::Write(seat, '\n');
+    }
   }
+  utils::FastIO::Write("x\n");
 }
 storage::record_id_t TrainManager::GetStationId(std::string_view station_name) {
   storage::record_id_t station_id;

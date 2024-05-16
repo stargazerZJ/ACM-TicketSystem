@@ -60,6 +60,7 @@ inline std::string_view get_field(const char *src, size_t size) {
 inline int stoi(std::string_view str) {
   int ret = 0;
   for (char c : str) {
+    ASSERT(isdigit(c));
     ret = ret * 10 + c - '0';
   }
   return ret;
