@@ -68,7 +68,7 @@ auto BPlusTree<KeyType, ValueType>::Insert(const KeyType &key, const ValueType &
     ctx.current_frame_ = CreateRootFrame();
     ctx.root_page_id_ = ctx.current_frame_.PageId();
     ctx.stack_.emplace_back(ctx.root_page_id_, 0);
-  } {
+  } else {
     auto leaf = ctx.current_frame_.template As<LeafFrame>();
     if (ctx.stack_.back().Index() <= leaf->GetSize() &&
       leaf->KeyAt(ctx.stack_.back().Index()) == key) {
@@ -79,21 +79,22 @@ auto BPlusTree<KeyType, ValueType>::Insert(const KeyType &key, const ValueType &
   return true;
 }
 template<typename KeyType, typename ValueType>
-auto BPlusTree<KeyType, ValueType>::Emplace(const KeyType &key, auto value_generator) -> bool {
+auto BPlusTree<KeyType, ValueType>::GetOrEmplace(const KeyType &key, auto value_generator, ValueType *value) -> bool {
   Context ctx = FindLeafFrame(key);
   if (ctx.stack_.empty()) {
     ctx.current_frame_ = CreateRootFrame();
     ctx.root_page_id_ = ctx.current_frame_.PageId();
     ctx.stack_.emplace_back(ctx.root_page_id_, 0);
-  } {
+  } else {
     auto leaf = ctx.current_frame_.template As<LeafFrame>();
     if (ctx.stack_.back().Index() <= leaf->GetSize() &&
       leaf->KeyAt(ctx.stack_.back().Index()) == key) {
+      if (value) *value = leaf->ValueAt(ctx.stack_.back().Index());
       return false;
     }
   }
-  auto value = value_generator();
-  InsertInLeaf(key, value, ctx);
+  auto value_ = value_generator();
+  InsertInLeaf(key, value_, ctx);
   return true;
 }
 template<typename KeyType, typename ValueType>

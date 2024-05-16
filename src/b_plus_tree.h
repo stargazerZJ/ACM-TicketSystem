@@ -25,7 +25,8 @@ class BPlusTree {
 
   auto Insert(const KeyType &key, const ValueType &value) -> bool;
 
-  auto Emplace(const KeyType &key, auto value_generator) -> bool;
+  /// @brief store to *value if found, call value_generator otherwise
+  auto GetOrEmplace(const KeyType &key, auto value_generator, ValueType *value = nullptr) -> bool;
 
   auto Remove(const KeyType &key) -> bool;
 

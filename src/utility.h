@@ -56,10 +56,13 @@ inline std::string_view get_field(const char *src, size_t size) {
   // terminate at '\0' or size
   return std::string_view(src, std::find(src, src + size, '\0') - src); // NOLINT(*-return-braced-init-list)
 }
-} // namespace utils
 
-namespace business {
-using date_t = int8_t;
-using time_t = int16_t;
-using abs_time_t = int32_t;
-} // namespace business
+inline int stoi(std::string_view str) {
+  int ret = 0;
+  for (char c : str) {
+    ret = ret * 10 + c - '0';
+  }
+  return ret;
+}
+
+} // namespace utils

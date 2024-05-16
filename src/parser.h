@@ -4,12 +4,13 @@
 
 #pragma once
 
+#include "config.h"
 #include "fastio.h"
-#include "utility.h"
 #include "marcos.h"
 #include <sstream>
 #include <string_view>
 #include <string>
+#include <utility.h>
 
 namespace utils {
 class Args;
@@ -20,15 +21,16 @@ class Parser {
     /// @brief Format: `[timestamp] command -a value -b value`
     static std::pair<Command, Args> Read(const std::string &line);
 
-    /// @brief Format: "mm-dd" -> 0 ~ 92 (0: 06-01, 92: 08-31)
+    /// @brief Format: "mm-dd" -> 0 ~ 91 (0: 06-01, 91: 08-31)
     static auto ParseDate(std::string_view date_string) -> business::date_t;
-    /// @brief Format: 0 ~ 92 -> "mm-dd" (0: 06-01, 92: 08-31)
+    /// @brief Format: 0 ~ 91 -> "mm-dd" (0: 06-01, 91: 08-31)
     static auto DateString(business::date_t date) -> std::string;
     /// @brief Format: "hi:mi" -> 0 ~ 1439 (0: 00:00, 1439: 23:59)
-    static auto ParseTime(std::string_view time_string) -> business::date_t;
+    static auto ParseTime(std::string_view time_string) -> business::time_t;
     /// @brief Format: 0 ~ 1439 -> "hi:mi" (0: 00:00, 1439: 23:59)
-    static auto TimeString(business::date_t time) -> std::string;
-    // static std::string DateTimeString(business::date_t datetime); // TODO: define this function
+    static auto TimeString(business::time_t time) -> std::string;
+    /// @brief Format: timestamp -> "mm-dd hi:mi", -1 -> "xx-xx xx:xx"
+    static std::string DateTimeString(business::abs_time_t datetime);
 
     class DelimitedStrIterator {
       public:
