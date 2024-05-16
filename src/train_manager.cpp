@@ -89,7 +89,8 @@ void TrainManager::ReleaseTrain(std::string_view train_name) {
   }
   // 1. Add vacancy information
   size_t vacancy_size = DATE_BATCH_SIZE * (train_info->station_count - 1);
-  for (int i = 0; i < DATE_BATCH_COUNT; ++i) {
+  for (int i = train_info->date_beg / DATE_BATCH_SIZE;
+       i <= train_info->date_end / DATE_BATCH_SIZE; ++i) {
     auto vacancy = vls_->Allocate<Vacancy>(vacancy_size);
     train_info->vacancy_id[i] = vacancy.RecordID();
     std::fill_n(vacancy->vacancy, vacancy_size, train_info->seat_count);
