@@ -25,10 +25,10 @@ void TicketSystemCLI::run() {
     ROUTE(logout);
     ROUTE(query_profile);
     ROUTE(modify_profile);
-    // ROUTE(add_train);
-    // ROUTE(delete_train);
-    // ROUTE(release_train);
-    // ROUTE(query_train);
+    ROUTE(add_train);
+    ROUTE(delete_train);
+    ROUTE(release_train);
+    ROUTE(query_train);
     // ROUTE(query_ticket);
     // ROUTE(query_transfer);
     // ROUTE(buy_ticket);
@@ -69,6 +69,32 @@ void TicketSystemCLI::modify_profile(const utils::Args& args) {
   ticket_system_->ModifyProfile(args.GetFlag('c'), args.GetFlag('u'),
                                 args.GetFlag('p'), args.GetFlag('n'),
                                 args.GetFlag('m'), privilege);
+}
+void TicketSystemCLI::add_train(const utils::Args& args) {
+  ticket_system_->AddTrain(args.GetFlag('i'),
+                           utils::stoi(args.GetFlag('n')),
+                           utils::stoi(args.GetFlag('m')),
+                           utils::Parser::ParseTime(args.GetFlag('x')),
+                           args.GetFlag('y')[0],
+                           utils::Parser::DelimitedStrIterator(
+                               args.GetFlag('s')),
+                           utils::Parser::DelimitedStrIterator(
+                               args.GetFlag('p')),
+                           utils::Parser::DelimitedStrIterator(
+                               args.GetFlag('t')),
+                           utils::Parser::DelimitedStrIterator(
+                               args.GetFlag('o')),
+                           utils::Parser::DelimitedStrIterator(
+                               args.GetFlag('d')));
+}
+void TicketSystemCLI::delete_train(const utils::Args& args) {
+  ticket_system_->DeleteTrain(args.GetFlag('i'));
+}
+void TicketSystemCLI::release_train(const utils::Args& args) {
+  ticket_system_->ReleaseTrain(args.GetFlag('i'));
+}
+void TicketSystemCLI::query_train(const utils::Args& args) {
+  ticket_system_->QueryTrain(args.GetFlag('i'), utils::Parser::ParseDate(args.GetFlag('d')));
 }
 void TicketSystemCLI::clean(const utils::Args& args) {
   ticket_system_ = std::make_unique<TicketSystem>(storage::DB_FILE_NAME, true);
