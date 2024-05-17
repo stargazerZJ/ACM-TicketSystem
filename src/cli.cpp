@@ -30,7 +30,7 @@ void TicketSystemCLI::run() {
     ROUTE(release_train);
     ROUTE(query_train);
     ROUTE(query_ticket);
-    // ROUTE(query_transfer);
+    ROUTE(query_transfer);
     ROUTE(buy_ticket);
     ROUTE(query_order);
     // ROUTE(refund_ticket);
@@ -101,6 +101,11 @@ void TicketSystemCLI::query_ticket(const utils::Args& args) {
   ticket_system_->QueryTicket(args.GetFlag('s'), args.GetFlag('t'),
                               utils::Parser::ParseDate(args.GetFlag('d')),
                               args.GetFlag('p'));
+}
+void TicketSystemCLI::query_transfer(const utils::Args& args) {
+  ticket_system_->QueryTransfer(args.GetFlag('s'), args.GetFlag('t'),
+                                utils::Parser::ParseDate(args.GetFlag('d')),
+                                args.GetFlag('p'));
 }
 void TicketSystemCLI::buy_ticket(const utils::Args& args) {
   bool agree_to_wait = args.GetFlag('q') == "true";

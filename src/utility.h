@@ -41,11 +41,27 @@ ForwardIt upper_bound(ForwardIt first, ForwardIt last, const T &value) {
   return it;
 }
 
+template<class ForwardIt, class T>
+ForwardIt lower_bound(ForwardIt first, ForwardIt last, const T &value) {
+  unsigned int count = std::distance(first, last) + 1;
+  ForwardIt it = first - 1;
+
+  unsigned int mid = 0;
+  for (unsigned int b = std::bit_floor(count); b; b >>= 1) {
+    if (mid + b < count && (*(it + mid + b) < value)) {
+      mid |= b;
+    }
+  }
+
+  std::advance(it, mid + 1);
+  return it;
+}
+
 template<class It, class Comp>
 void merge(It f1, It l1, It f2, It l2, It o, Comp comp = std::less<decltype(*f1)>()) {
   for (; f1 != l1; ++f1) {
     while (f2 != l2 && comp(*f2, *f1)) *(o++) = *(f2++);
-    *(o++) = *f1;
+    *(o++) = std::move(*f1);
   }
   while (f2 != l2) *(o++) = *(f2++);
 }
@@ -55,7 +71,7 @@ void inplace_merge(It l, It mid, It r, Comp comp = std::less<decltype(*l)>()) {
   auto *temp = new std::remove_reference_t<decltype(*l)>[r - l];
   merge(l, mid, mid, r, temp, comp);
   // memcpy(l, temp, sizeof(It) * (r - l));
-  std::copy(temp, temp + (r - l), l);
+  std::move(temp, temp + (r - l), l);
   delete[] temp;
 }
 

@@ -120,6 +120,12 @@ class TrainManager {
                      std::string_view sort_by // "time" (default) or "cost"
     );
 
+    void QueryTransfer(std::string_view from_str,
+                       std::string_view to_str,
+                       date_t date,
+                       std::string_view sort_by // "time" (default) or "cost"
+    );
+
   private:
     storage::VarLengthStore *vls_; // stores TrainInfo, Vacancy, and StationName
   protected:
@@ -130,5 +136,12 @@ class TrainManager {
     // station -> trains passing by. The value char is not used
 
     storage::record_id_t GetStationId(std::string_view station_name); // Will create a new station if not found
+
+    void PrintTicket(storage::record_id_t train_id,
+                     std::string_view from_str,
+                     std::string_view to_str,
+                     storage::record_id_t from_id,
+                     storage::record_id_t to_id,
+                     date_t date);
 };
 } // namespace business
