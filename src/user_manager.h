@@ -35,12 +35,24 @@ class UserManager {
                 bool reset) : vls_(vls), user_id_index_(bpm, bpm->AllocateInfo(), reset) {
     }
 
-  void AddUser(std::string_view cur_user, std::string_view username, std::string_view password, std::string_view real_name, std::string_view email, int8_t privilege);
+    ~UserManager();
 
-  void Login(std::string_view username, std::string_view password);
-  void Logout(std::string_view username);
-  void QueryProfile(std::string_view cur_user, std::string_view username);
-  void ModifyProfile(std::string_view cur_user, std::string_view username, std::string_view password, std::string_view real_name, std::string_view email, int8_t privilege);
+    void AddUser(std::string_view cur_user,
+                 std::string_view username,
+                 std::string_view password,
+                 std::string_view real_name,
+                 std::string_view email,
+                 int8_t privilege);
+
+    void Login(std::string_view username, std::string_view password);
+    void Logout(std::string_view username);
+    void QueryProfile(std::string_view cur_user, std::string_view username);
+    void ModifyProfile(std::string_view cur_user,
+                       std::string_view username,
+                       std::string_view password,
+                       std::string_view real_name,
+                       std::string_view email,
+                       int8_t privilege);
 
   private:
     storage::VarLengthStore *vls_; // stores UserProfile
@@ -49,9 +61,9 @@ class UserManager {
     std::unordered_map<storage::hash_t, UserData> logged_in_users_{};
     storage::BPlusTree<storage::hash_t, storage::record_id_t> user_id_index_;
 
-  int8_t GetLoggedInUserPrivilege(storage::hash_t username);
-  int8_t GetLoggedInUserPrivilege(std::string_view username);
-  auto GetLoggedInUser(storage::hash_t username) -> decltype(logged_in_users_.find({}));
-  auto GetLoggedInUser(std::string_view username) -> decltype(logged_in_users_.find({}));
+    int8_t GetLoggedInUserPrivilege(storage::hash_t username);
+    int8_t GetLoggedInUserPrivilege(std::string_view username);
+    auto GetLoggedInUser(storage::hash_t username) -> decltype(logged_in_users_.find({}));
+    auto GetLoggedInUser(std::string_view username) -> decltype(logged_in_users_.find({}));
 };
 } // namespace business

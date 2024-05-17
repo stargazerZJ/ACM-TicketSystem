@@ -8,6 +8,12 @@
 #include <hash.h>
 
 namespace business {
+UserManager::~UserManager() {
+  for (const auto &[_, user] : logged_in_users_) {
+    auto handle = vls_->Get<UserProfile>(user.user_id);
+    handle->order_count = user.order_count;
+  }
+}
 void UserManager::AddUser(std::string_view cur_user,
                           std::string_view username,
                           std::string_view password,
