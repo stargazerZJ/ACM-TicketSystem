@@ -46,8 +46,8 @@ void TicketSystemCLI::run() {
 }
 void TicketSystemCLI::add_user(const utils::Args& args) {
   int8_t privilege = args.GetFlag('g').empty()
-                       ? 10
-                       : args.GetFlag('g')[0] - '0';
+                       ? -1
+                       : utils::stoi(args.GetFlag('g'));
   ticket_system_->AddUser(args.GetFlag('c'), args.GetFlag('u'),
                           args.GetFlag('p'),
                           args.GetFlag('n'), args.GetFlag('m'),
@@ -65,7 +65,7 @@ void TicketSystemCLI::query_profile(const utils::Args& args) {
 void TicketSystemCLI::modify_profile(const utils::Args& args) {
   int8_t privilege = args.GetFlag('g').empty()
                        ? -1
-                       : args.GetFlag('g')[0] - '0';
+                       : utils::stoi(args.GetFlag('g'));
   ticket_system_->ModifyProfile(args.GetFlag('c'), args.GetFlag('u'),
                                 args.GetFlag('p'), args.GetFlag('n'),
                                 args.GetFlag('m'), privilege);
@@ -120,6 +120,7 @@ void TicketSystemCLI::query_order(const utils::Args& args) {
   ticket_system_->QueryOrder(args.GetFlag('u'));
 }
 void TicketSystemCLI::refund_ticket(const utils::Args& args) {
+  // return utils::FastIO::Write("0\n");
   order_no_t order_no = args.GetFlag('n').empty()
                           ? 0
                           : utils::stoi(args.GetFlag('n'));
