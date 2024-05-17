@@ -36,7 +36,7 @@ void UserManager::Login(std::string_view username, std::string_view password) {
   auto username_hash = storage::Hash()(username);
   storage::record_id_t user_id;
   if (logged_in_users_.contains(username_hash)
-    || !user_id_index_.GetValue(username_hash, &user_id)) {
+      || !user_id_index_.GetValue(username_hash, &user_id)) {
     return utils::FastIO::WriteFailure();
   }
   const auto handle = vls_->Get<UserProfile>(user_id);
@@ -49,9 +49,14 @@ void UserManager::Login(std::string_view username, std::string_view password) {
 }
 void UserManager::Logout(std::string_view username) {
   auto username_hash = storage::Hash()(username);
-  if (logged_in_users_.erase(username_hash) == 0) {
+  auto it = logged_in_users_.find(username_hash);
+  if (it == logged_in_users_.end()) {
     return utils::FastIO::WriteFailure();
   }
+  // Write the number of orders of the user being logged out.
+  auto handle = vls_->Get<UserProfile>(it->second.user_id);
+  handle->order_count = it->second.order_count;
+  logged_in_users_.erase(it);
   utils::FastIO::WriteSuccess();
 }
 void UserManager::QueryProfile(std::string_view cur_user,
@@ -110,6 +115,10 @@ void UserManager::ModifyProfile(std::string_view cur_user,
   }
   if (privilege != -1) {
     handle->privilege = privilege;
+    auto it = GetLoggedInUser(username_hash);
+    if (it != logged_in_users_.end()) {
+      it->second.privilege = privilege;
+    }
   }
   utils::FastIO::Write(username, ' ',
                        utils::get_field(handle->real_name, 15), ' ',
@@ -123,5 +132,14 @@ int8_t UserManager::GetLoggedInUserPrivilege(storage::hash_t username) {
 }
 int8_t UserManager::GetLoggedInUserPrivilege(std::string_view username) {
   return GetLoggedInUserPrivilege(storage::Hash()(username));
+}
+auto UserManager::GetLoggedInUser(
+    storage::hash_t username) -> decltype(logged_in_users_.find({})) {
+  return logged_in_users_.find(username);
+}
+auto UserManager::GetLoggedInUser(
+    std::string_view username) -> decltype(logged_in_users_.find(
+    {})) {
+  return logged_in_users_.find(storage::Hash()(username));
 }
 } // namespace business

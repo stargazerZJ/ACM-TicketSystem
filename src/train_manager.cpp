@@ -85,6 +85,7 @@ void Vacancy::ReduceVacancy(int8_t station_count, date_t date, int from, int to,
   auto vacancy = this->GetVacancy(station_count, date);
   for (int i = from; i < to; ++i) {
     vacancy[i] -= num;
+    ASSERT(vacancy[i] >= 0);
   }
 }
 void TrainManager::AddTrain(std::string_view train_name, int8_t station_count,

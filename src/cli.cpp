@@ -29,10 +29,10 @@ void TicketSystemCLI::run() {
     ROUTE(delete_train);
     ROUTE(release_train);
     ROUTE(query_train);
-    // ROUTE(query_ticket);
+    ROUTE(query_ticket);
     // ROUTE(query_transfer);
-    // ROUTE(buy_ticket);
-    // ROUTE(query_order);
+    ROUTE(buy_ticket);
+    ROUTE(query_order);
     // ROUTE(refund_ticket);
     ROUTE(clean);
 #undef ROUTE
@@ -101,6 +101,18 @@ void TicketSystemCLI::query_ticket(const utils::Args& args) {
   ticket_system_->QueryTicket(args.GetFlag('s'), args.GetFlag('t'),
                               utils::Parser::ParseDate(args.GetFlag('d')),
                               args.GetFlag('p'));
+}
+void TicketSystemCLI::buy_ticket(const utils::Args& args) {
+  bool agree_to_wait = args.GetFlag('q') == "true";
+  ticket_system_->BuyTicket(args.GetTimestamp(), args.GetFlag('u'),
+                            args.GetFlag('i'),
+                            utils::Parser::ParseDate(args.GetFlag('d')),
+                            args.GetFlag('f'), args.GetFlag('t'),
+                            utils::stoi(args.GetFlag('n')),
+                            agree_to_wait);
+}
+void TicketSystemCLI::query_order(const utils::Args& args) {
+  ticket_system_->QueryOrder(args.GetFlag('u'));
 }
 void TicketSystemCLI::clean(const utils::Args& args) {
   ticket_system_ = std::make_unique<TicketSystem>(storage::DB_FILE_NAME, true);

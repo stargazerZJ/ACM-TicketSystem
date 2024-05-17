@@ -121,6 +121,7 @@ class TrainManager {
 
   private:
     storage::VarLengthStore *vls_; // stores TrainInfo, Vacancy, and StationName
+  protected:
     storage::BPlusTree<storage::hash_t, storage::record_id_t> train_id_index_;
     storage::BPlusTree<storage::hash_t, storage::record_id_t> station_id_index_;
     storage::BPlusTree<

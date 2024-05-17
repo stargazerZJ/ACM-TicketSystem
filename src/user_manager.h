@@ -12,7 +12,7 @@ namespace business {
 struct UserProfile {
   DELETE_CONSTRUCTOR_AND_DESTRUCTOR(UserProfile);
   using data_t = char;
-  int order_count;
+  order_no_t order_count;
   // char username[30]; // no need to store username in user profile
   // char password[30];
   storage::hash_t password;
@@ -24,7 +24,7 @@ struct UserProfile {
 // User data stored in memory
 struct UserData {
   storage::record_id_t user_id;
-  int order_count;
+  order_no_t order_count;
   int8_t privilege;
 };
 
@@ -51,5 +51,7 @@ class UserManager {
 
   int8_t GetLoggedInUserPrivilege(storage::hash_t username);
   int8_t GetLoggedInUserPrivilege(std::string_view username);
+  auto GetLoggedInUser(storage::hash_t username) -> decltype(logged_in_users_.find({}));
+  auto GetLoggedInUser(std::string_view username) -> decltype(logged_in_users_.find({}));
 };
 } // namespace business

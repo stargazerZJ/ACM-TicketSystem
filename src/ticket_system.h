@@ -5,6 +5,7 @@
 #pragma once
 
 #include <buffer_pool_manager.h>
+#include <hash.h>
 #include <variable_length_store.h>
 
 #include <string>
@@ -31,5 +32,19 @@ class TicketSystem : public TicketSystemBase, public UserManager, public TicketM
       TicketManager(&bpm_, &(TicketSystemBase::vls_), reset),
       TrainManager(&bpm_, &(TicketSystemBase::vls_), reset) {
     }
+
+    void BuyTicket(int timestamp,
+                   std::string_view username,
+                   std::string_view train_name,
+                   date_t date,
+                   std::string_view from_str,
+                   std::string_view to_str,
+                   int seat_count,
+                   bool agree_to_wait);
+
+    void QueryOrder(std::string_view username);
+
+  private:
+    storage::VarLengthStore *vls() { return &(TicketSystemBase::vls_); }
 };
 } // namespace business
