@@ -314,7 +314,7 @@ void TrainManager::QueryTransfer(std::string_view from_str,
     storage::record_id_t train_id[2]{};
     /// the station id of the interchange station
     storage::record_id_t interchange_id{};
-    date_t second_depart_date = -1;
+    date_t second_date = -1; // the departure date from the interchange station
     auto operator <=>(const Option& other) const = default;
   };
   struct FirstTrain {
@@ -414,7 +414,7 @@ void TrainManager::QueryTransfer(std::string_view from_str,
               {first_train.train_name, std::string(train_name)},
               {first_train.train_id, train_id},
               inter_id,
-              second_depart_date
+              static_cast<date_t>(train->GetLeaveTime(second_depart_date, interchange_no) / 1440)
           };
           if (new_best < best) {
             best = new_best;
@@ -433,7 +433,7 @@ void TrainManager::QueryTransfer(std::string_view from_str,
   PrintTicket(best.train_id[0], from_str, inter_name, from, best.interchange_id,
               date);
   PrintTicket(best.train_id[1], inter_name, to_str, best.interchange_id, to,
-              best.second_depart_date);
+              best.second_date);
 }
 storage::record_id_t TrainManager::GetStationId(std::string_view station_name) {
   storage::record_id_t station_id;

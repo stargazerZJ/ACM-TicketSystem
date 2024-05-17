@@ -40,6 +40,9 @@ void TicketSystem::BuyTicket(int timestamp, std::string_view username,
   if (!train_info->IsOnSale(depart_date)) {
     return utils::FastIO::WriteFailure(); // train not on sale
   }
+  if (seat_count > train_info->seat_count) {
+    return utils::FastIO::WriteFailure(); // too many tickets
+  }
   auto vacancy_handle = vls()->Get<Vacancy>(
       train_info->GetVacancyId(depart_date));
   auto vacancy = vacancy_handle.Get();
@@ -139,14 +142,15 @@ void TicketSystem::QueryOrder(std::string_view username) {
   }
 }
 void TicketSystem::RefundTicket(std::string_view username,
-                                order_no_t order_no) {
+                                order_no_t order_latest_no) {
   auto user_data = GetLoggedInUser(username);
   if (user_data == logged_in_users_.end()) {
     return utils::FastIO::WriteFailure(); // user not logged in
   }
-  if (order_no >= user_data->second.order_count) {
+  if (order_latest_no > user_data->second.order_count) {
     return utils::FastIO::WriteFailure(); // invalid order_no
   }
+  order_no_t order_no = user_data->second.order_count - order_latest_no;
   TicketInfo ticket;
   auto pos = ticket_index_.GetValue(
       {user_data->second.user_id, static_cast<order_no_t>(-order_no)}, &ticket);
