@@ -54,13 +54,14 @@ template<class It, class Comp>
 void inplace_merge(It l, It mid, It r, Comp comp = std::less<decltype(*l)>()) {
   auto *temp = new std::remove_reference_t<decltype(*l)>[r - l];
   merge(l, mid, mid, r, temp, comp);
-  memcpy(l, temp, sizeof(It) * (r - l));
+  // memcpy(l, temp, sizeof(It) * (r - l));
+  std::copy(temp, temp + (r - l), l);
   delete[] temp;
 }
 
 template<class It, class Comp = std::less<decltype(*std::declval<It>())> >
 void sort(It l, It r, Comp comp = std::less<decltype(*l)>()) {
-  if (r - l == 1) return;
+  if (r - l <= 1) return;
   auto mid = l + (r - l) / 2;
   storage::sort(l, mid, comp);
   storage::sort(mid, r, comp);
