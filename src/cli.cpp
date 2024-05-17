@@ -94,7 +94,13 @@ void TicketSystemCLI::release_train(const utils::Args& args) {
   ticket_system_->ReleaseTrain(args.GetFlag('i'));
 }
 void TicketSystemCLI::query_train(const utils::Args& args) {
-  ticket_system_->QueryTrain(args.GetFlag('i'), utils::Parser::ParseDate(args.GetFlag('d')));
+  ticket_system_->QueryTrain(args.GetFlag('i'),
+                             utils::Parser::ParseDate(args.GetFlag('d')));
+}
+void TicketSystemCLI::query_ticket(const utils::Args& args) {
+  ticket_system_->QueryTicket(args.GetFlag('s'), args.GetFlag('t'),
+                              utils::Parser::ParseDate(args.GetFlag('d')),
+                              args.GetFlag('p'));
 }
 void TicketSystemCLI::clean(const utils::Args& args) {
   ticket_system_ = std::make_unique<TicketSystem>(storage::DB_FILE_NAME, true);

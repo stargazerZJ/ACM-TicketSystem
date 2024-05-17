@@ -37,36 +37,27 @@ struct TrainInfo {
 
   bool IsOnSale(date_t date) const { return date >= date_beg && date <= date_end; }
 
-  storage::record_id_t GetVacancyId(date_t date) const {
-    return vacancy_id[date / DATE_BATCH_SIZE];
-  }
+  storage::record_id_t GetVacancyId(date_t date) const { return vacancy_id[date / DATE_BATCH_SIZE]; }
 
-  storage::record_id_t GetStationId(int station_id) const {
-    if (station_id == 0) return depart_station;
-    ASSERT(station_id < station_count);
-    return station[station_id - 1].station_id;
-  }
+  storage::record_id_t GetStationId(int station_no) const;
 
-  abs_time_t GetArriveTime(date_t date, int station_id) const {
-    if (station_id == 0) return -1;
-    ASSERT(station_id < station_count);
-    return date * 1440
-        + depart_time + station[station_id - 1].arrive_time;
-  }
+  int GetStationNo(storage::record_id_t station_id) const;
 
-  abs_time_t GetLeaveTime(date_t date, int station_id) const {
-    if (station_id == 0) return date * 1440 + depart_time;
-    ASSERT(station_id < station_count);
-    if (station_id == station_count - 1) return -1;
-    return date * 1440
-        + depart_time + station[station_id].leave_time;
-  }
+  abs_time_t GetArriveTime(date_t date, int station_no) const;
 
-  int GetPrice(int station_id) const {
-    if (station_id == 0) return 0;
-    ASSERT(station_id < station_count);
-    return station[station_id - 1].price;
-  }
+  abs_time_t GetLeaveTime(date_t date, int station_no) const;
+
+  time_t GetTravelTime(int from, int to) const;
+
+  int GetPrice(int station_no) const;
+
+  int GetPrice(int from, int to) const;
+
+  /// @brief Get the date when the train departs from the FIRST station
+  /// @param leaving_date the date when the train departs from the `leaving_station`
+  /// @param leaving_station the station where the train departs
+  /// @retuen the date when the train departs from the FIRST station
+  date_t GetDepartDate(date_t leaving_date, int leaving_station) const;
 };
 
 // Vacacy information of one service of a train
@@ -76,10 +67,15 @@ struct Vacancy {
   using data_t = int;
   using zero_base_size = std::true_type;
 
-  int GetVacancy(int8_t station_count, date_t date, int station_id) const {
-    ASSERT(station_id < station_count - 1);
-    return vacancy[(date % DATE_BATCH_SIZE) * (station_count - 1) + station_id];
-  }
+  int GetVacancy(int8_t station_count, date_t date, int station_no) const;
+
+  const int *GetVacancy(int8_t station_count, date_t date) const;
+
+  int *GetVacancy(int8_t station_count, date_t date);
+
+  int GetVacancy(int8_t station_count, date_t date, int from, int to) const;
+
+  void ReduceVacancy(int8_t station_count, date_t date, int from, int to, int num);
 };
 
 struct StationName {
@@ -116,6 +112,12 @@ class TrainManager {
     void ReleaseTrain(std::string_view train_name);
 
     void QueryTrain(std::string_view train_name, date_t date);
+
+    void QueryTicket(std::string_view from_str,
+                     std::string_view to_str,
+                     date_t date,
+                     std::string_view sort_by // "time" (default) or "cost"
+    );
 
   private:
     storage::VarLengthStore *vls_; // stores TrainInfo, Vacancy, and StationName

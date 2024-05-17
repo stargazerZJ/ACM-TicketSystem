@@ -7,6 +7,86 @@
 #include <hash.h>
 
 namespace business {
+storage::record_id_t TrainInfo::GetStationId(int station_no) const {
+  if (station_no == 0) return depart_station;
+  ASSERT(station_no < station_count);
+  return station[station_no - 1].station_id;
+}
+int TrainInfo::GetStationNo(storage::record_id_t station_id) const {
+  if (station_id == depart_station) return 0;
+  for (int i = 0; i < station_count - 1; ++i) {
+    if (station[i].station_id == station_id) return i + 1;
+  }
+  return -1;
+}
+abs_time_t TrainInfo::GetArriveTime(date_t date, int station_no) const {
+  if (station_no == 0) return -1;
+  ASSERT(station_no < station_count);
+  return date * 1440
+         + depart_time + station[station_no - 1].arrive_time;
+}
+abs_time_t TrainInfo::GetLeaveTime(date_t date, int station_no) const {
+  if (station_no == 0) return date * 1440 + depart_time;
+  ASSERT(station_no < station_count);
+  if (station_no == station_count - 1) return -1;
+  return date * 1440
+         + depart_time + station[station_no].leave_time;
+}
+time_t TrainInfo::GetTravelTime(int from, int to) const {
+  ASSERT(from < station_count && to < station_count && from < to);
+  if (from == 0) return station[to - 1].arrive_time;
+  return station[to - 1].arrive_time - station[from - 1].leave_time;
+}
+int TrainInfo::GetPrice(int station_no) const {
+  if (station_no == 0) return 0;
+  ASSERT(station_no < station_count);
+  return station[station_no - 1].price;
+}
+int TrainInfo::GetPrice(int from, int to) const {
+  ASSERT(from < station_count && to < station_count && from < to);
+  return GetPrice(to) - GetPrice(from);
+}
+date_t TrainInfo::
+GetDepartDate(date_t leaving_date, int leaving_station) const {
+  ASSERT(leaving_station < station_count - 1);
+  // the last station is not included
+  if (leaving_station == 0) return leaving_date;
+  return leaving_date - (depart_time + station[leaving_station - 1].leave_time)
+         / 1440;
+}
+int Vacancy::GetVacancy(int8_t station_count, date_t date,
+                        int station_no) const {
+  ASSERT(station_no < station_count - 1); // the last station is not included
+  return vacancy[(date % DATE_BATCH_SIZE) * (station_count - 1) + station_no];
+}
+const int* Vacancy::GetVacancy(int8_t station_count, date_t date) const {
+  return vacancy + (date % DATE_BATCH_SIZE) * (station_count - 1);
+}
+int* Vacancy::GetVacancy(int8_t station_count, date_t date) {
+  return vacancy + (date % DATE_BATCH_SIZE) * (station_count - 1);
+}
+int Vacancy::GetVacancy(int8_t station_count, date_t date, int from,
+                        int to) const {
+  ASSERT(from < station_count && to < station_count && from < to);
+  // the last station is not included
+  // the vacancy of a range [from, to] is the minimum of the vacancies of all the stations in the range
+  // TODO(opt): use SIMD
+  int min_vacancy = std::numeric_limits<int>::max();
+  auto vacancy = this->GetVacancy(station_count, date);
+  for (int i = from; i < to; ++i) {
+    min_vacancy = std::min(min_vacancy, vacancy[i]);
+  }
+  return min_vacancy;
+}
+void Vacancy::ReduceVacancy(int8_t station_count, date_t date, int from, int to,
+                            int num) {
+  ASSERT(from < station_count && to < station_count && from < to);
+  // the last station is not included
+  auto vacancy = this->GetVacancy(station_count, date);
+  for (int i = from; i < to; ++i) {
+    vacancy[i] -= num;
+  }
+}
 void TrainManager::AddTrain(std::string_view train_name, int8_t station_count,
                             int seat_count, time_t depart_time, char type,
                             utils::Parser::DelimitedStrIterator stations,
@@ -148,6 +228,77 @@ void TrainManager::QueryTrain(std::string_view train_name, date_t date) {
     }
   }
   utils::FastIO::Write("x\n");
+}
+void TrainManager::QueryTicket(std::string_view from_str,
+                               std::string_view to_str,
+                               date_t date, std::string_view sort_by) {
+  storage::record_id_t from, to;
+  if (!station_id_index_.GetValue(storage::Hash()(from_str), &from) ||
+      !station_id_index_.GetValue(storage::Hash()(to_str), &to)) {
+    return utils::FastIO::WriteFailure();
+  }
+  std::vector<std::pair<int, storage::record_id_t> > trains;
+  auto from_it = station_train_index_.LowerBound(
+      {from, storage::INVALID_RECORD_ID});
+  auto to_it = station_train_index_.LowerBound(
+      {to, storage::INVALID_RECORD_ID});
+  bool sort_by_cost = sort_by == "cost"; // otherwise sort by time
+  for (; from_it != station_train_index_.End() && from_it.Key().first == from;
+         ++from_it) {
+    while (to_it != station_train_index_.End() && to_it.Key().first == to
+           && to_it.Key().second < from_it.Key().second)
+      ++to_it;
+    if (to_it == station_train_index_.End() || to_it.Key().first != to) {
+      break;
+    }
+    if (from_it.Key().second != to_it.Key().second) continue;
+    storage::record_id_t train_id = from_it.Key().second;
+    auto train_handle = vls_->Get<TrainInfo>(train_id);
+    auto train = train_handle.Get();
+    auto from_station_no = train->GetStationNo(from);
+    ASSERT(from_station_no != -1);
+    if (!train->IsOnSale(train->GetDepartDate(date, from_station_no))) continue;
+    auto to_station_no = train->GetStationNo(to);
+    ASSERT(to_station_no != -1);
+    if (sort_by_cost) {
+      int cost = train->GetPrice(from_station_no, to_station_no);
+      trains.emplace_back(cost, train_id);
+    } else /* sort by time */ {
+      int time = train->GetTravelTime(from_station_no, to_station_no);
+      trains.emplace_back(time, train_id);
+    }
+  }
+  storage::sort(trains.data(), trains.data() + trains.size());
+  /*
+  第一行输出一个整数，表示符合要求的车次数量。
+
+  接下来每一行输出一个符合要求的车次，按要求排序。格式为 `<trainID> <FROM> <LEAVING_TIME> -> <TO> <ARRIVING_TIME> <PRICE> <SEAT>`，其中出发时间、到达时间格式同 `query_train`，`<FROM>` 和 `<TO>` 为出发站和到达站，`<PRICE>` 为累计价格，`<SEAT>` 为最多能购买的票数。
+  */
+  utils::FastIO::Write(trains.size());
+  for (auto [_, train_id] : trains) {
+    auto train_handle = vls_->Get<TrainInfo>(train_id);
+    auto train = train_handle.Get();
+    auto from_station_no = train->GetStationNo(from);
+    auto to_station_no = train->GetStationNo(to);
+    date_t depart_date = train->GetDepartDate(date, from_station_no);
+    auto depart_time = train->GetLeaveTime(depart_date, from_station_no);
+    auto arrive_time = train->GetArriveTime(depart_date, to_station_no);
+    auto price = train->GetPrice(from_station_no, to_station_no);
+    auto seat = train->seat_count;
+    if (train->IsReleased()) {
+      auto vacancy_handle = vls_->Get<Vacancy>(
+          train->GetVacancyId(depart_date));
+      seat = vacancy_handle.Get()->
+          GetVacancy(train->station_count, date,
+                     from_station_no, to_station_no);
+    }
+    utils::FastIO::Write(train->train_name, ' ',
+                         from_str, ' ',
+                         utils::Parser::DateTimeString(depart_time), " -> ",
+                         to_str, ' ',
+                         utils::Parser::DateTimeString(arrive_time), ' ',
+                         price, ' ', seat, '\n');
+  }
 }
 storage::record_id_t TrainManager::GetStationId(std::string_view station_name) {
   storage::record_id_t station_id;

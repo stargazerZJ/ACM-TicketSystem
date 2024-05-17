@@ -35,6 +35,7 @@ namespace business {
 using date_t = int8_t; // 0 ~ 91 (0: 06-01, 91: 08-31)
 using time_t = int16_t; // 0 ~ 1439 (0: 00:00, 1439: 23:59)
 using abs_time_t = int32_t; // 0 ~ 92 * 1440 - 1, (0: 06-01 00:00, 92 * 1440 - 1: 08-31 23:59)
+using order_no_t = int16_t; // 0 ~ 32767
 
 static constexpr date_t MAX_DATE = 92;
 static constexpr size_t DATE_BATCH_SIZE = 10; // the number of days in a Vacancy var_length_object
