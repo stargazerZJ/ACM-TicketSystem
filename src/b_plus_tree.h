@@ -20,6 +20,7 @@ class BPlusTree {
   using LeafFrame = BPlusTreeLeafFrame<KeyType, ValueType, PagesPerFrame>;
   using BasicFrameGuard = BufferPoolManager<PagesPerFrame>::BasicFrameGuard;
   class PositionHint;
+  class Iterator;
 
   explicit BPlusTree(BufferPoolManager<PagesPerFrame> *bpm, page_id_t &root_page_id, bool reset = false);
 
@@ -32,7 +33,7 @@ class BPlusTree {
 
   auto GetValue(const KeyType &key, ValueType *value = nullptr) -> PositionHint;
 
-  auto LowerBound(const KeyType &key) -> PositionHint;
+  auto LowerBound(const KeyType &key) -> Iterator;
 
   auto PartialSearch(const auto &key) -> std::vector<std::pair<KeyType, ValueType>>;
 
@@ -102,6 +103,7 @@ class BPlusTree {
     const BPlusTree *bpt_{};
     PositionHint hint_{};
     BasicFrameGuard frame_{};
+    Iterator(const BPlusTree *bpt, const PositionHint &hint, BasicFrameGuard frame) : bpt_(bpt), hint_(hint), frame_(std::move(frame)) {}
     auto Frame() const -> const LeafFrame * { return frame_.As<LeafFrame>(); }
     auto FrameMut() -> LeafFrame * { return frame_.AsMut<LeafFrame>(); }
   };

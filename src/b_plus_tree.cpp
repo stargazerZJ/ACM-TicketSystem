@@ -137,23 +137,23 @@ auto BPlusTree<KeyType, ValueType>::GetValue(const KeyType &key, ValueType *valu
   } while (true);
 }
 template<typename KeyType, typename ValueType>
-auto BPlusTree<KeyType, ValueType>::LowerBound(const KeyType &key) -> PositionHint {
+auto BPlusTree<KeyType, ValueType>::LowerBound(const KeyType &key) -> Iterator {
   auto ctx = FindLeafFrame(key);
   if (ctx.stack_.empty()) {
-    return {};
+    return {this, {}};
   }
   auto leaf = ctx.current_frame_.template As<LeafFrame>();
   auto index = ctx.stack_.back().Index();
   if (0 < index && index <= leaf->GetSize() && leaf->KeyAt(index) == key) {
-    return ctx.stack_.back();
+    return {this, ctx.stack_.back(), std::move(ctx.current_frame_)};
   }
   if (index < leaf->GetSize()) {
-    return {ctx.stack_.back().PageId(), index + 1};
+    return {this, {ctx.stack_.back().PageId(), index + 1}, std::move(ctx.current_frame_)};
   } else {
     if (leaf->GetNextPageId() == INVALID_PAGE_ID) {
-      return {};
+      return {this, {}};
     } else {
-      return {leaf->GetNextPageId(), 1};
+      return {this, {leaf->GetNextPageId(), 1}};
     }
   }
 }
@@ -484,8 +484,7 @@ auto BPlusTree<KeyType, ValueType>::PartialSearch(const auto &key) -> std::vecto
   using KeyTypeSecond = KeyType::second_type;
   static_assert(std::is_same_v<decltype(key), const KeyTypeFirst &>);
   std::vector<std::pair<KeyType, ValueType> > result;
-  auto pos = LowerBound(KeyType(key, std::numeric_limits<KeyTypeSecond>::min()));
-  auto it = Iterator(this, pos);
+  auto it = LowerBound(KeyType(key, std::numeric_limits<KeyTypeSecond>::min()));
   while (it != End() && it.Key().first == key) {
     result.emplace_back(it.Key(), it.Value());
     ++it;
