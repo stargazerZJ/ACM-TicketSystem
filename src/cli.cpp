@@ -33,7 +33,7 @@ void TicketSystemCLI::run() {
     ROUTE(query_transfer);
     ROUTE(buy_ticket);
     ROUTE(query_order);
-    // ROUTE(refund_ticket);
+    ROUTE(refund_ticket);
     ROUTE(clean);
 #undef ROUTE
     if (command == "exit") {
@@ -118,6 +118,12 @@ void TicketSystemCLI::buy_ticket(const utils::Args& args) {
 }
 void TicketSystemCLI::query_order(const utils::Args& args) {
   ticket_system_->QueryOrder(args.GetFlag('u'));
+}
+void TicketSystemCLI::refund_ticket(const utils::Args& args) {
+  order_no_t order_no = args.GetFlag('n').empty()
+                          ? 0
+                          : utils::stoi(args.GetFlag('n'));
+  ticket_system_->RefundTicket(args.GetFlag('u'), order_no);
 }
 void TicketSystemCLI::clean(const utils::Args& args) {
   ticket_system_ = std::make_unique<TicketSystem>(storage::DB_FILE_NAME, true);

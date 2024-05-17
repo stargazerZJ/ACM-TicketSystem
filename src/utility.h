@@ -20,6 +20,11 @@ struct PackedPair {
 };
 #pragma pack(pop)
 
+template<typename T1, typename T2>
+auto make_packed_pair(const T1 &first, const T2 &second) {
+  return PackedPair<T1, T2>{first, second};
+}
+
 template<class ForwardIt, class T>
 ForwardIt upper_bound(ForwardIt first, ForwardIt last, const T &value) {
   // if (first == last) return last;

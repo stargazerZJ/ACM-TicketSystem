@@ -135,4 +135,81 @@ void TicketSystem::QueryOrder(std::string_view username) {
                          ticket.seat_count, '\n');
   }
 }
+void TicketSystem::RefundTicket(std::string_view username,
+                                order_no_t order_no) {
+  auto user_data = GetLoggedInUser(username);
+  if (user_data == logged_in_users_.end()) {
+    return utils::FastIO::WriteFailure(); // user not logged in
+  }
+  if (order_no >= user_data->second.order_count) {
+    return utils::FastIO::WriteFailure(); // invalid order_no
+  }
+  TicketInfo ticket;
+  auto pos = ticket_index_.GetValue(
+      {user_data->second.user_id, static_cast<order_no_t>(-order_no)}, &ticket);
+  ASSERT(pos);
+  if (ticket.status == TicketStatus::REFUNDED) {
+    return utils::FastIO::WriteFailure(); // already refunded
+  }
+  if (ticket.status == TicketStatus::SUCCESS) {
+    // restore vacancy
+    auto train_handle = vls()->Get<TrainInfo>(ticket.train_id);
+    auto train = train_handle.Get();
+    auto vacancy_handle = vls()->Get<Vacancy>(
+        train->GetVacancyId(ticket.date));
+    auto vacancy = vacancy_handle.GetMut();
+    vacancy->ReduceVacancy(
+        train->station_count,
+        ticket.date,
+        ticket.from,
+        ticket.to,
+        -ticket.seat_count);
+    // update pending queue
+    auto pending_it = pending_queue_.LowerBound(
+        {{ticket.train_id, ticket.date}, 0});
+    using PendingKey = decltype(pending_it.Key());
+    std::vector<PendingKey> to_delete;
+    for (; pending_it != pending_queue_.End()
+           && pending_it.Key().first ==
+           storage::make_packed_pair(ticket.train_id, ticket.date);
+           ++pending_it) {
+      if (vacancy->GetVacancy(
+              train->station_count, ticket.date,
+              pending_it.Value().from, pending_it.Value().to) <
+          pending_it.Value().seat_count) {
+        continue;
+      }
+      TicketInfo ticket2;
+      auto pos2 = ticket_index_.GetValue(
+          {pending_it.Value().user_id,
+           static_cast<order_no_t>(-pending_it.Value().order_no)},
+          &ticket2);
+      ASSERT(pos2);
+      to_delete.push_back(pending_it.Key());
+      if (ticket2.status != TicketStatus::PENDING) {
+        continue;
+      }
+      ticket2.status = TicketStatus::SUCCESS;
+      vacancy->ReduceVacancy(
+          train->station_count,
+          ticket.date,
+          pending_it.Value().from,
+          pending_it.Value().to,
+          pending_it.Value().seat_count);
+      ticket_index_.SetValue(
+          {pending_it.Value().user_id,
+           static_cast<order_no_t>(-pending_it.Value().order_no)},
+          ticket2, pos2);
+    }
+    for (auto& key : to_delete) {
+      bool result = pending_queue_.Remove(key);
+      ASSERT(result);
+    }
+  }
+  ticket.status = TicketStatus::REFUNDED;
+  ticket_index_.SetValue(
+      {user_data->second.user_id, static_cast<order_no_t>(-order_no)},
+      ticket, pos);
+  utils::FastIO::WriteSuccess();
+}
 } // namespace business

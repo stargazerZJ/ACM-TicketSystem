@@ -44,6 +44,8 @@ class TicketSystem : public TicketSystemBase, public UserManager, public TicketM
 
     void QueryOrder(std::string_view username);
 
+    void RefundTicket(std::string_view username, order_no_t order_no);
+
   private:
     storage::VarLengthStore *vls() { return &(TicketSystemBase::vls_); }
 };
