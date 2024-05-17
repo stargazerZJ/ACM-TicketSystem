@@ -55,6 +55,7 @@ testdir="$(tmpdir)"
 cp "$exefile" "$testdir/"
 exe="$testdir/$exename"
 cwd="$(pwd)"
+db="$testdir/db.bin"
 basedir="$cwd/test/ticket_system/$1"
 
 cd "$testdir"
@@ -76,6 +77,9 @@ for i in $list; do
   fi
   rm "$outfile" "$difffile"
 done
+
+echo "DB size: $(du -m "$db" | cut -f1)"
+echo "DB size in pages: $(( $(du -b "$db" | cut -f1) / 4096 ))"
 
 rm -r "$testdir"
 echo "Testcase complete, answer correct."
