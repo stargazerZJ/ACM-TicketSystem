@@ -59,6 +59,8 @@ basedir="$cwd/test/ticket_system/$1"
 
 cd "$testdir"
 
+echo "Testdir: $testdir"
+
 for i in $list; do
   outfile="$(tmp)"
   echo "About to run input #$i..."

@@ -13,7 +13,8 @@ namespace business {
 struct TrainInfo {
   DELETE_CONSTRUCTOR_AND_DESTRUCTOR(TrainInfo);
   char train_name[20];
-  char type; // 'D' or 'G'
+  char type;
+  bool released;
   int8_t station_count;
   int seat_count;
   time_t depart_time;
@@ -33,7 +34,7 @@ struct TrainInfo {
   Station station[0]; // departing station is not included, so size is `station_count - 1`
   using data_t = Station;
 
-  bool IsReleased() const { return vacancy_id[0] != storage::INVALID_RECORD_ID; }
+  bool IsReleased() const { return released; }
 
   bool IsOnSale(date_t date) const { return date >= date_beg && date <= date_end; }
 
