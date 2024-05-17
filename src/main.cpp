@@ -169,7 +169,7 @@ void parser_test() {
 int main() {
   // bpt_test();
   // storage_test(true);
-  bool force_reset = true;
+  bool force_reset = false;
   business::TicketSystemCLI cli(force_reset);
   cli.run();
   return 0;
