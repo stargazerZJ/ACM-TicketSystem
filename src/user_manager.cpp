@@ -10,8 +10,10 @@
 namespace business {
 UserManager::~UserManager() {
   for (const auto &[_, user] : logged_in_users_) {
-    auto handle = vls_->Get<UserProfile>(user.user_id);
-    handle->order_count = user.order_count;
+    if (user.order_count != user.original_order_count) {
+      auto handle = vls_->Get<UserProfile>(user.user_id);
+      handle->order_count = user.order_count;
+    }
   }
 }
 void UserManager::AddUser(std::string_view cur_user,
@@ -49,7 +51,7 @@ void UserManager::Login(std::string_view username, std::string_view password) {
   if (handle->password != storage::Hash()(password)) {
     return utils::FastIO::WriteFailure();
   }
-  logged_in_users_[username_hash] = {user_id, handle->order_count,
+  logged_in_users_[username_hash] = {user_id, handle->order_count, handle->order_count,
                                      handle->privilege};
   utils::FastIO::WriteSuccess();
 }
@@ -60,8 +62,10 @@ void UserManager::Logout(std::string_view username) {
     return utils::FastIO::WriteFailure();
   }
   // Write the number of orders of the user being logged out.
-  auto handle = vls_->Get<UserProfile>(it->second.user_id);
-  handle->order_count = it->second.order_count;
+  if (it->second.order_count != it->second.original_order_count) {
+    auto handle = vls_->Get<UserProfile>(it->second.user_id);
+    handle->order_count = it->second.order_count;
+  }
   logged_in_users_.erase(it);
   utils::FastIO::WriteSuccess();
 }

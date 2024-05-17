@@ -25,6 +25,7 @@ struct UserProfile {
 struct UserData {
   storage::record_id_t user_id;
   order_no_t order_count;
+  order_no_t original_order_count;
   int8_t privilege;
 };
 
