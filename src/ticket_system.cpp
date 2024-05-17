@@ -10,6 +10,9 @@ void TicketSystem::BuyTicket(int timestamp, std::string_view username,
                              std::string_view from_str,
                              std::string_view to_str, int seat_count,
                              bool agree_to_wait) {
+  if (date < 0) {
+    return utils::FastIO::WriteFailure(); // invalid date
+  }
   auto user_data = GetLoggedInUser(username);
   if (user_data == logged_in_users_.end()) {
     return utils::FastIO::WriteFailure(); // user not logged in

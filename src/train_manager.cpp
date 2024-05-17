@@ -190,6 +190,9 @@ void TrainManager::ReleaseTrain(std::string_view train_name) {
 }
 void TrainManager::QueryTrain(std::string_view train_name, date_t date) {
   storage::record_id_t train_id;
+  if (date < 0) {
+    return utils::FastIO::WriteFailure(); // invalid date
+  }
   if (!train_id_index_.GetValue(storage::Hash()(train_name), &train_id)) {
     return utils::FastIO::WriteFailure();
   }
@@ -237,6 +240,9 @@ void TrainManager::QueryTrain(std::string_view train_name, date_t date) {
 void TrainManager::QueryTicket(std::string_view from_str,
                                std::string_view to_str,
                                date_t date, std::string_view sort_by) {
+  if (date < 0) {
+    return utils::FastIO::Write("0\n"); // invalid date
+  }
   storage::record_id_t from, to;
   if (!station_id_index_.GetValue(storage::Hash()(from_str), &from) ||
       !station_id_index_.GetValue(storage::Hash()(to_str), &to)) {
@@ -292,6 +298,9 @@ void TrainManager::QueryTicket(std::string_view from_str,
 void TrainManager::QueryTransfer(std::string_view from_str,
                                  std::string_view to_str, date_t date,
                                  std::string_view sort_by) {
+  if (date < 0) {
+    return utils::FastIO::Write("0\n"); // invalid date
+  }
   storage::record_id_t from, to;
   if (!station_id_index_.GetValue(storage::Hash()(from_str), &from) ||
       !station_id_index_.GetValue(storage::Hash()(to_str), &to)) {

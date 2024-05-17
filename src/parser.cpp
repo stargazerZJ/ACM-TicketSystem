@@ -67,7 +67,7 @@ auto Parser::ParseDate(std::string_view date_string) -> business::date_t {
   int day = utils::stoi(date_string.substr(3, 2));
 
   // Validate month and day range
-  ASSERT(month >= 6 && month <= 8);
+  // ASSERT(month >= 6 && month <= 8);
   ASSERT(day >= 1 && day <= 31);
 
   int dayOfYear = 0;
@@ -84,11 +84,19 @@ auto Parser::ParseDate(std::string_view date_string) -> business::date_t {
       ASSERT(day <= 31); // August has 31 days
       dayOfYear = 61 + day - 1;
       break;
+    case 9:
+      ASSERT(day <= 30); // September has 30 days
+      dayOfYear = 92 + day - 1;
+      break;
     default:
-      ASSERT(false); // Invalid month
+      if (month < 6) {
+        dayOfYear = -1;
+      } else {
+        dayOfYear = 122;
+      }
   }
 
-  ASSERT(dayOfYear >= 0 && dayOfYear <= 91);
+  // ASSERT(dayOfYear >= 0 && dayOfYear <= 91);
   return static_cast<business::date_t>(dayOfYear);
 }
 auto Parser::DateString(business::date_t date) -> std::string {
