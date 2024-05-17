@@ -16,10 +16,10 @@ namespace utils {
 class Args;
 class Parser {
   public:
-    using Command = std::string;
+    using Command = std::string_view;
 
     /// @brief Format: `[timestamp] command -a value -b value`
-    static std::pair<Command, Args> Read(const std::string &line);
+    static std::pair<Command, Args> Read(std::string_view line);
 
     /// @brief Format: "mm-dd" -> 0 ~ 91 (0: 06-01, 91: 08-31)
     static auto ParseDate(std::string_view date_string) -> business::date_t;
@@ -65,9 +65,9 @@ class Args {
     int timestamp_{};
     std::string flags[26];
 
-    void SetFlag(char name, std::string &&value) {
+    void SetFlag(char name, std::string_view value) {
       ASSERT(name >= 'a' && name <= 'z');
-      flags[name - 'a'] = std::move(value);
+      flags[name - 'a'] = value;
     }
     void SetTimestamp(int timestamp) { timestamp_ = timestamp; }
 };

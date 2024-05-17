@@ -7,43 +7,60 @@
 #include <iomanip>
 
 namespace utils {
-std::pair<Parser::Command, Args> Parser::Read(const std::string& line) {
+std::pair<Parser::Command, Args> Parser::Read(std::string_view line) {
   Args args;
-  std::stringstream ss(line);
-  std::string token;
+  size_t pos = 0;
 
-  // Extract timestamp
-  if (std::getline(ss, token, ' ') && token.front() == '[' && token.back() ==
-      ']') {
-    token = token.substr(1, token.size() - 2);
-    args.SetTimestamp(std::stoi(token));
-  } else {
-    throw std::invalid_argument(
-        "Invalid input format: missing or malformed timestamp");
+  // Read timestamp
+  ASSERT(line[pos] == '[');
+  ++pos;
+  size_t timestamp_end = line.find(']', pos);
+  ASSERT(timestamp_end != std::string::npos);
+  args.timestamp_ = std::stoi(std::string(line.substr(pos, timestamp_end - pos)));
+  pos = timestamp_end + 1;
+
+  // Skip whitespace
+  while (pos < line.size() && std::isspace(line[pos])) {
+    ++pos;
   }
 
-  // Extract command
-  Command command;
-  if (!(ss >> command)) {
-    throw std::invalid_argument("Invalid input format: missing command");
-  }
+  // Read command
+  size_t command_end = line.find(' ', pos);
+  Command command = line.substr(pos, command_end - pos);
+  pos = command_end + 1;
 
-  // Extract flags and values
-  while (ss >> token) {
-    if (token.front() == '-' && token.size() == 2 && isalpha(token[1]) &&
-        islower(token[1])) {
-      char flag = token[1];
-      std::string flagValue;
-      if (!(ss >> flagValue)) {
-        throw std::invalid_argument("Invalid input format: missing flag value");
-      }
-      args.SetFlag(flag, std::move(flagValue));
-    } else {
-      throw std::invalid_argument("Invalid input format: malformed flag");
+  // Read flags and values
+  while (pos < line.size()) {
+    // Skip whitespace
+    while (pos < line.size() && std::isspace(line[pos])) {
+      ++pos;
     }
+
+    if (pos >= line.size() || line[pos] != '-') {
+      break;
+    }
+    ++pos;  // skip '-'
+
+    // Read flag name
+    char flag = line[pos];
+    ++pos;
+
+    // Skip whitespace
+    while (pos < line.size() && std::isspace(line[pos])) {
+      ++pos;
+    }
+
+    // Read flag value
+    size_t value_end = line.find(' ', pos);
+    if (value_end == std::string::npos) {
+      value_end = line.size();
+    }
+    std::string_view value = line.substr(pos, value_end - pos);
+    args.SetFlag(flag, value);
+    pos = value_end + 1;
   }
 
-  return std::make_pair(std::move(command), std::move(args));
+  return std::make_pair(command, args);
 }
 auto Parser::ParseDate(std::string_view date_string) -> business::date_t {
   int month = utils::stoi(date_string.substr(0, 2));
