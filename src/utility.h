@@ -40,6 +40,32 @@ ForwardIt upper_bound(ForwardIt first, ForwardIt last, const T &value) {
   // }
   return it;
 }
+
+template<class It, class Comp>
+void merge(It f1, It l1, It f2, It l2, It o, Comp comp = std::less<decltype(*f1)>()) {
+  for (; f1 != l1; ++f1) {
+    while (f2 != l2 && comp(*f2, *f1)) *(o++) = *(f2++);
+    *(o++) = *f1;
+  }
+  while (f2 != l2) *(o++) = *(f2++);
+}
+
+template<class It, class Comp>
+void inplace_merge(It l, It mid, It r, Comp comp = std::less<decltype(*l)>()) {
+  auto *temp = new std::remove_reference_t<decltype(*l)>[r - l];
+  merge(l, mid, mid, r, temp, comp);
+  memcpy(l, temp, sizeof(It) * (r - l));
+  delete[] temp;
+}
+
+template<class It, class Comp = std::less<decltype(*std::declval<It>())> >
+void sort(It l, It r, Comp comp = std::less<decltype(*l)>()) {
+  if (r - l == 1) return;
+  auto mid = l + (r - l) / 2;
+  storage::sort(l, mid, comp);
+  storage::sort(mid, r, comp);
+  storage::inplace_merge(l, mid, r, comp);
+}
 } // namespace storage
 
 namespace utils {
@@ -65,5 +91,4 @@ inline int stoi(std::string_view str) {
   }
   return ret;
 }
-
 } // namespace utils
