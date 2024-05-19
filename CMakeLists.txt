@@ -18,6 +18,7 @@ if(DEFINED ENV{DEBUG})
     add_definitions(-DDEBUG)
 endif()
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -pg")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Ofast -march=native")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address,undefined,leak")
 

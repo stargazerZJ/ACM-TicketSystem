@@ -1,0 +1,114 @@
+#!/bin/bash
+
+if [ ! -e test/ticket_system/config.json ]; then
+  echo "./test/ticket_system/config.json does not exist, please extract testcases to that directory."
+  exit 1
+fi
+
+if [ ! -e "$(which jq)" ]; then
+  echo 'You need the program "jq" to use this script.'
+  echo 'Run "sudo apt install jq" to install it.'
+  exit 1
+fi
+
+if [ ! -e "test/ticket_system/$1" -o -z "$1" ]; then
+  if [ ! -z "$1" ]; then
+    echo "Testcase $1 does not exist."
+    exit 1
+  fi
+  echo "Usage: $0 <testcase name>"
+  echo "Example: $0 basic_1"
+  exit 1
+fi
+
+list=$(jq ".$1[]" < "test/ticket_system/config.json")
+if [ -z "$list" ]; then
+  echo "invalid config"
+  exit 1
+fi
+
+exedir="cmake-build-debug"
+exename="code"
+exefile="$exedir/$exename"
+if [ ! -e "$exefile" ]; then
+  echo "Please compile the ticket system and place the executable at \"$exefile\""
+  exit 1
+fi
+
+function tmp () {
+  if [ Darwin = "$(uname -s)" ]; then
+    mktemp /tmp/ticket.XXXXXXXXXX
+  else
+    mktemp -p /tmp ticket.XXXXXXXXXX
+  fi
+}
+
+function tmpdir () {
+  if [ Darwin = "$(uname -s)" ]; then
+    mktemp -d /tmp/ticket.XXXXXXXXXX
+  else
+    mktemp -d -p /tmp ticket.XXXXXXXXXX
+  fi
+}
+
+testdir="$(tmpdir)"
+cp "$exefile" "$testdir/"
+exe="$testdir/$exename"
+cwd="$(pwd)"
+db="$testdir/db.bin"
+basedir="$cwd/test/ticket_system/$1"
+
+cd "$testdir"
+
+echo "Testdir: $testdir"
+
+# FlameGraph setup
+fl_dir=$FL_BASE_PATH
+
+for i in $list; do
+  outfile="$(tmp)"
+  echo "About to run input #$i..."
+  # Run the executable with input and output redirection, and record perf data
+  "$exe" < "$basedir/$i.in" > "$outfile" &
+  PID=$!
+  perf record -F 1000 -p $PID -g -- sleep 1
+  if [ $? -ne 0 ]; then
+    echo "Warning: perf failed for input #$i. Skipping FlameGraph generation." >&2
+	wait $PID
+	kill $PID > /dev/null 2>&1
+	sleep 0.1
+	kill -9 $PID > /dev/null 2>&1
+  else
+	wait $PID
+	kill $PID > /dev/null 2>&1
+	sleep 0.1
+	kill -9 $PID > /dev/null 2>&1
+
+    # Generate FlameGraph
+    SVG_PATH="$basedir/test-$1-$i-$(date '+%s').svg"
+    "$fl_dir/flamegraph.pl" <("$fl_dir/stackcollapse-perf.pl" <(perf script)) > "$SVG_PATH"
+    if [ $? -ne 0 ]; then
+      echo "Warning: Flame graph generation failed for input #$i." >&2
+	  rm $SVG_PATH
+    fi
+    rm -f perf.data
+  fi
+
+  difffile="$(tmp)"
+  if diff -ZB "$outfile" "$basedir/$i.out" > "$difffile"; then true; else
+    cat "$difffile" | head -5
+    backup="test-$1-$i-$(date '+%s').log"
+    cp "$outfile" "$basedir/$backup"
+    echo "Test failed on input #$i."
+    echo "Output saved to $basedir/$backup"
+    exit 1
+  fi
+  rm "$outfile" "$difffile"
+done
+
+echo "DB size: $(du -m "$db" | cut -f1)"
+echo "DB size in pages: $(( $(du -b "$db" | cut -f1) / 4096 ))"
+
+rm -r "$testdir"
+echo "Testcase complete, all answers correct."
+echo "FlameGraphs saved in $basedir"
