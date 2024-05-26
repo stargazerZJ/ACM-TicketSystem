@@ -56,9 +56,7 @@ class ApiClient:
         return self.validate_string(password, 30, allow_spaces=True)
 
     def validate_name(self, name):
-        if not re.match(r'^[\u4e00-\u9fa5]{2,5}$', name):
-            raise ValueError("Name must be 2 to 5 Chinese characters")
-        return name
+        self.validate_string(name, 15)
 
     def validate_mail(self, mail):
         return self.validate_string(mail, 30)
