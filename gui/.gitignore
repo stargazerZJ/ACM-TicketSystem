@@ -1,0 +1,10 @@
+code
+db.bin
+
+.idea
+.vscode
+
+__pycache__
+*.pyc
+*.pyo
+*.pyd
