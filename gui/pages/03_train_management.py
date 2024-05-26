@@ -11,12 +11,12 @@ ensure_api_client()
 def app():
     st.title("Train Management")
 
-    option = st.selectbox("Select Functionality", ["Add Train", "Query Train"])
+    option = st.selectbox("Select Functionality", ["Add Train", "Manage Existing Train"])
 
     if option == "Add Train":
         add_train_form()
-    elif option == "Query Train":
-        query_train_form()
+    elif option == "Manage Existing Train":
+        manage_train_form()
 
 
 def add_train_form_old():
@@ -142,12 +142,18 @@ def add_train_form():
                 else:
                     st.error("Failed to add train. The train ID might already exist.")
 
-def query_train_form():
-    with st.form("query_train_form"):
+
+def manage_train_form():
+    with st.form("manage_train_form"):
         trainID = st.text_input("Train ID", value="Train_1")
         queryDate = st.date_input("Query Date", value=datetime.date(2024, 6, 1),
                                   min_value=datetime.date(2024, 6, 1), max_value=datetime.date(2024, 8, 31))
-        queryButton = st.form_submit_button("Query Train")
+
+        # Buttons for different functionalities
+        col1, col2, col3 = st.columns(3)
+        queryButton = col1.form_submit_button("Query Train")
+        releaseButton = col2.form_submit_button("Release Train")
+        deleteButton = col3.form_submit_button("Delete Train")
 
         if queryButton:
             with server_state_lock["api_client"]:
@@ -157,6 +163,24 @@ def query_train_form():
                     st.text(result)
                 else:
                     st.error("Failed to query train. The train ID or date might be incorrect.")
+
+        if releaseButton:
+            with server_state_lock["api_client"]:
+                api_client = server_state.api_client
+                result = api_client.release_train(trainID)
+                if result == "0":
+                    st.success(f"Train {trainID} released successfully.")
+                else:
+                    st.error("Failed to release train. The train ID might be incorrect or train is already released.")
+
+        if deleteButton:
+            with server_state_lock["api_client"]:
+                api_client = server_state.api_client
+                result = api_client.delete_train(trainID)
+                if result == "0":
+                    st.success(f"Train {trainID} deleted successfully.")
+                else:
+                    st.error("Failed to delete train. The train ID might be incorrect or train cannot be deleted.")
 
 
 if __name__ == "__main__":
