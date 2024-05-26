@@ -94,7 +94,7 @@ def modify_profile_form():
         password = st.text_input("New Password (optional)", type="password")
         name = st.text_input("New Real Name (optional)")
         mailAddr = st.text_input("New Email Address (optional)")
-        privilege = st.number_input("New Privilege (optional)", min_value=0, max_value=10, step=1, value=10)
+        privilege = st.text_input("New Privilege (optional)")
         submitted = st.form_submit_button("Modify Profile")
         if submitted:
             cur_username = st.session_state['username']
