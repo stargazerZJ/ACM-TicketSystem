@@ -17,6 +17,7 @@ class FastIO {
   static auto Write(auto &&...a) { return ((WRITE(a)), ...); }
   static void WriteSuccess() { Write("0\n"); }
   static void WriteFailure() { Write("-1\n"); }
+  static void WriteDone() { Write('\n'); }
  private:
   static void READ(std::integral auto &a) {
     int fl = 1;

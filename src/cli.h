@@ -85,5 +85,9 @@ class TicketSystemCLI {
   static void WriteTimestamp(const utils::Args &args) {
     utils::FastIO::Write('[', args.GetTimestamp(), ']', ' ');
   }
+
+  static void WriteDone() {
+    utils::FastIO::WriteDone();
+  }
 };
 } // namespace business

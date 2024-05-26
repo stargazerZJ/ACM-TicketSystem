@@ -19,7 +19,7 @@ void TicketSystemCLI::run() {
   std::string line;
   while (std::getline(std::cin, line)) {
     auto [command, args] = utils::Parser::Read(line);
-#define ROUTE(cmd) if (command == #cmd) { WriteTimestamp(args); cmd(args); continue; }
+#define ROUTE(cmd) if (command == #cmd) { WriteTimestamp(args); cmd(args); WriteDone(); continue; }
     ROUTE(add_user);
     ROUTE(login);
     ROUTE(logout);
@@ -39,6 +39,7 @@ void TicketSystemCLI::run() {
     if (command == "exit") {
       WriteTimestamp(args);
       exit(args);
+      WriteDone();
       break;
     }
     ASSERT(false); // No such command
