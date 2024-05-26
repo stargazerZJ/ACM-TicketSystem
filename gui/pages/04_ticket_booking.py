@@ -43,34 +43,55 @@ def query_ticket_form():
                 if result_lines[0] == "0":
                     st.write("No matching trains found.")
                 else:
-                    num_trains = int(result_lines[0])
-                    st.write(f"Number of matching trains: {num_trains}")
-
                     # Store results in session state to persist across reruns
                     st.session_state['query_results'] = result_lines[1:]
 
+    def buy_ticket_callback(train_info, travel_date):
+        st.session_state['buy_params'] = {
+            'trainID': train_info['Train ID'],
+            'start_station': train_info['From'],
+            'end_station': train_info['To'],
+            'travel_date': travel_date,
+            'num_tickets': 1,
+            'accept_standby': False
+        }
+        st.session_state['ticket_page'] = 'Buy Ticket'
+
     # Check if query results exist in session state
     if 'query_results' in st.session_state:
-        for i, line in enumerate(st.session_state['query_results'], 1):
+        st.subheader("Query Results")
+        st.write(f"Number of matching trains: {len(st.session_state['query_results'])}")
+
+        # Display header row
+        header_cols = st.columns(8)
+        headers = ["Train ID", "From", "Leaving Time", "To", "Arriving Time", "Price", "Seat", "Action"]
+        for header_col, header in zip(header_cols, headers):
+            header_col.write(f"**{header}**")
+
+        results = []
+        for line in st.session_state['query_results']:
             train_info = line.split()
-            st.write(
-                f"Train ID: {train_info[0]}, From: {train_info[1]}, Leaving Time: {train_info[2]} {train_info[3]} -> To: {train_info[5]}, Arriving Time: {train_info[6]} {train_info[7]}, Price: {train_info[8]}, Seat: {train_info[9]}")
+            results.append({
+                "Train ID": train_info[0],
+                "From": train_info[1],
+                "Leaving Time": f"{train_info[2]} {train_info[3]}",
+                "To": train_info[5],
+                "Arriving Time": f"{train_info[6]} {train_info[7]}",
+                "Price": train_info[8],
+                "Seat": train_info[9]
+            })
 
-            # Use a unique key for each button and handle clicks via callback
-            def buy_ticket_callback(train_info=train_info):
-                print(f"Buying ticket for train {train_info[0]}")
-                st.session_state['buy_params'] = {
-                    'trainID': train_info[0],
-                    'start_station': train_info[1],
-                    'end_station': train_info[5],
-                    'travel_date': travel_date,
-                    'num_tickets': 1,
-                    'accept_standby': False
-                }
-                st.session_state['ticket_page'] = 'Buy Ticket'
-                print("session_state: ", st.session_state)
-
-            st.button("Buy Ticket", key=f"buy_button_{i}", on_click=buy_ticket_callback)
+        for result in results:
+            cols = st.columns(8)
+            cols[0].write(result['Train ID'])
+            cols[1].write(result['From'])
+            cols[2].write(result['Leaving Time'])
+            cols[3].write(result['To'])
+            cols[4].write(result['Arriving Time'])
+            cols[5].write(result['Price'])
+            cols[6].write(result['Seat'])
+            cols[7].button("Buy Ticket", key=f"buy_button_{result['Train ID']}", on_click=buy_ticket_callback,
+                           args=(result, travel_date))
 
 def buy_ticket_form():
     st.session_state['ticket_page'] = 'Buy Ticket'
