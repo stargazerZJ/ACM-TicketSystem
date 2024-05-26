@@ -199,6 +199,17 @@ class ApiClient:
         self.process.terminate()
         return output
 
+    def restart(self):
+        self.process.terminate()
+        self.process = subprocess.Popen(
+            [self.executable_path],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+        return "0"
+
 
 if __name__ == "__main__":
     # Instantiate the class with the path to the executable

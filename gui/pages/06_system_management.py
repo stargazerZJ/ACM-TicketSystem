@@ -24,6 +24,12 @@ def system_management_page():
             st.session_state.pop('confirm_clean', None)
             st.rerun()
 
+    if st.button("Shutdown System"):
+        with server_state_lock["api_client"]:
+            api_client = server_state.api_client
+            api_client.exit()
+            exit(0)
+
 def clean_system():
     with server_state_lock["api_client"]:
         api_client = server_state.api_client
