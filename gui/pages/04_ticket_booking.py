@@ -130,6 +130,11 @@ def buy_ticket_form():
 
 def app():
     st.title("Ticket Booking")
+
+    if not st.session_state['username']:
+        st.write("Welcome to the Train Ticket Booking System. Please log in to use the system.")
+        return
+
     page = st.session_state.get('ticket_page', 'Query Ticket')
     # print("session_state: ", st.session_state)
     option = st.selectbox("Select Functionality", ["Query Ticket", "Buy Ticket"], index=0 if page == 'Query Ticket' else 1)
