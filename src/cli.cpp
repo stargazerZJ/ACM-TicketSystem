@@ -128,6 +128,7 @@ void TicketSystemCLI::refund_ticket(const utils::Args& args) {
 }
 void TicketSystemCLI::clean(const utils::Args& args) {
   ticket_system_ = std::make_unique<TicketSystem>(storage::DB_FILE_NAME, true);
+  utils::FastIO::WriteSuccess();
 }
 void TicketSystemCLI::exit(const utils::Args& args) {
   utils::FastIO::Write("bye\n");
