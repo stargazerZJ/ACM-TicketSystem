@@ -19,46 +19,11 @@ def app():
         manage_train_form()
 
 
-def add_train_form_old():
-    with st.form("add_train_form"):
-        trainID = st.text_input("Train ID")
-        stationNum = st.number_input("Number of Stations", min_value=2, max_value=100, step=1)
-        seatNum = st.number_input("Number of Seats", min_value=1)
-        stations = st.text_area("Stations (separate with '|')").split('|')
-        prices = st.text_area("Prices (separate with '|')").split('|')
-        prices = [int(price) for price in prices if price.strip().isdigit()]
-        startTime = st.time_input("Start Time")
-        travelTimes = st.text_area("Travel Times (in minutes, separate with '|')").split('|')
-        travelTimes = [int(time) for time in travelTimes if time.strip().isdigit()]
-        stopoverTimes = st.text_area("Stopover Times (in minutes, separate with '|')",
-                                     value="_" if stationNum == 2 else "").split('|')
-        stopoverTimes = [int(time) for time in stopoverTimes if
-                         time.strip().isdigit()] if stationNum > 2 else stopoverTimes
-        saleDate = st.text_area("Sale Dates (format mm-dd|mm-dd)").split('|')
-        trainType = st.text_input("Train Type (single uppercase letter)").upper()
-        submitted = st.form_submit_button("Add Train")
-
-        if submitted:
-            with server_state_lock["api_client"]:
-                api_client = server_state.api_client
-                stations = "|".join([station.strip() for station in stations if station.strip()])
-                prices = "|".join([str(price) for price in prices])
-                travelTimes = "|".join([str(time) for time in travelTimes])
-                stopoverTimes = "|".join([str(time) for time in stopoverTimes])
-                saleDate = "|".join([date.strip() for date in saleDate if date.strip()])
-                result = api_client.add_train(trainID, stationNum, seatNum, stations, prices,
-                                              startTime.strftime('%H:%M'), travelTimes, stopoverTimes, saleDate,
-                                              trainType)
-                if result == "0":
-                    st.success("Train added successfully.")
-                else:
-                    st.error("Failed to add train. The train ID might already exist.")
-
 
 def add_train_form():
     with st.form("add_train_form"):
         trainID = st.text_input("Train ID", value="Train_1")
-        seatNum = st.number_input("Number of Seats", min_value=1)
+        seatNum = st.number_input("Number of Seats", min_value=1, value=100)
         startTime = st.time_input("Start Time", value=datetime.time(8, 0), step=datetime.timedelta(minutes=1))
 
         # Improved sale date input
