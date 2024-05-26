@@ -10,6 +10,8 @@ project(ACM_TicketSystem)
 include_directories(src)
 include_directories(third_party)
 
+find_package(TBB REQUIRED COMPONENTS tbb)
+
 
 if(DEFINED ENV{LOCAL})
     add_definitions(-DLOCAL)
@@ -28,3 +30,4 @@ file(GLOB_RECURSE third_party_src third_party//*.cpp )
 list(REMOVE_ITEM main_src "${CMAKE_CURRENT_SOURCE_DIR}/src/b_plus_tree.cpp")
 
 add_executable(code ${main_src} ${third_party_src})
+target_link_libraries(code tbb)
