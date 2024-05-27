@@ -284,7 +284,7 @@ void TrainManager::QueryTicket(std::string_view from_str,
                           train_id);
     }
   }
-  storage::sort(trains.begin(), trains.end());
+  std::sort(trains.begin(), trains.end());
   /*
   第一行输出一个整数，表示符合要求的车次数量。
 
