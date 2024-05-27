@@ -54,6 +54,7 @@ class BufferPoolManager {
                                                                       replacer_(pool_size),
                                                                       buffer_(pool_size), free_list_(pool_size) {
       std::iota(free_list_.begin(), free_list_.end(), 0);
+      memset(page_table_, -1, sizeof(page_table_));
     }
     ~BufferPoolManager() { FlushAllFrames(); }
 
@@ -142,7 +143,7 @@ class BufferPoolManager {
     const size_t pool_size_;
     DiskManager<PagesPerFrame> disk_;
     LRUKReplacer replacer_;
-    std::unordered_map<page_id_t, frame_id_t> page_table_;
+    frame_id_t page_table_[MAX_PAGE_ID];
     std::vector<Frame<PagesPerFrame> > buffer_;
     std::vector<frame_id_t> free_list_;
 
@@ -183,7 +184,7 @@ bool BufferPoolManager<PagesPerFrame>::EnsureFreeList() {
     if (frame.IsDirty()) {
       disk_.WriteFrame(frame.GetPageId(), frame.GetData());
     }
-    page_table_.erase(frame.GetPageId());
+    page_table_[frame.GetPageId()] = -1;
     frame.Reset();
     free_list_.push_back(frame_id);
   }
@@ -191,11 +192,11 @@ bool BufferPoolManager<PagesPerFrame>::EnsureFreeList() {
 }
 template<int PagesPerFrame>
 auto BufferPoolManager<PagesPerFrame>::FetchFrame(page_id_t page_id) -> Frame<PagesPerFrame> * {
-  if (auto it = page_table_.find(page_id); it != page_table_.end()) {
-    auto &frame = buffer_[it->second];
+  if (page_table_[page_id] != -1) {
+    auto &frame = buffer_[page_table_[page_id]];
     replacer_.RecordAccess(page_id);
     if (frame.GetPinCount() == 0) {
-      replacer_.SetNonevictable(it->second);
+      replacer_.SetNonevictable(page_table_[page_id]);
     }
     ++frame.pin_count_;
     return &frame;
@@ -213,13 +214,13 @@ auto BufferPoolManager<PagesPerFrame>::FetchFrame(page_id_t page_id) -> Frame<Pa
 }
 template<int PagesPerFrame>
 auto BufferPoolManager<PagesPerFrame>::UnpinFrame(page_id_t page_id, bool is_dirty) -> bool {
-  if (auto it = page_table_.find(page_id); it != page_table_.end()) {
-    auto &frame = buffer_[it->second];
+  if (page_table_[page_id] != -1) {
+    auto &frame = buffer_[page_table_[page_id]];
     if (frame.GetPinCount() <= 0) {
       return false;
     }
     if (--frame.pin_count_ == 0) {
-      replacer_.SetEvictable(it->second, page_id);
+      replacer_.SetEvictable(page_table_[page_id], page_id);
     }
     frame.is_dirty_ |= is_dirty;
     return true;
@@ -228,12 +229,12 @@ auto BufferPoolManager<PagesPerFrame>::UnpinFrame(page_id_t page_id, bool is_dir
 }
 template<int PagesPerFrame>
 auto BufferPoolManager<PagesPerFrame>::DeletePage(page_id_t page_id) -> void {
-  if (auto it = page_table_.find(page_id); it != page_table_.end()) {
-    auto &frame = buffer_[it->second];
+  if (page_table_[page_id] != -1) {
+    auto &frame = buffer_[page_table_[page_id]];
     frame.Reset();
-    replacer_.Remove(it->second, page_id);
-    free_list_.push_back(it->second);
-    page_table_.erase(it);
+    replacer_.Remove(page_table_[page_id], page_id);
+    free_list_.push_back(page_table_[page_id]);
+    page_table_[page_id] = -1;
   }
   disk_.DeallocateFrame(page_id);
 }
