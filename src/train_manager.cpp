@@ -248,7 +248,7 @@ void TrainManager::QueryTicket(std::string_view from_str,
       !station_id_index_.GetValue(storage::Hash()(to_str), &to)) {
     return utils::FastIO::Write("0\n");
   }
-  std::vector<std::tuple<int, std::string, storage::record_id_t> > trains;
+  sjtu::vector<std::tuple<int, std::string, storage::record_id_t> > trains;
   auto from_it = station_train_index_.LowerBound(
       {from, storage::INVALID_RECORD_ID});
   auto to_it = station_train_index_.LowerBound(
@@ -333,7 +333,7 @@ void TrainManager::QueryTransfer(std::string_view from_str,
   };
 
   bool sort_by_cost = sort_by == "cost"; // otherwise sort by time
-  std::vector<FirstTrain> first_trains; {
+  sjtu::vector<FirstTrain> first_trains; {
     // enumerate the first train
     auto from_it = station_train_index_.LowerBound(
         {from, storage::INVALID_RECORD_ID});
@@ -381,8 +381,8 @@ void TrainManager::QueryTransfer(std::string_view from_str,
       for (int interchange_no = to_station_no - 1; interchange_no >= 0; --
            interchange_no) {
         storage::record_id_t inter_id = train->GetStationId(interchange_no);
-        auto first_train_it = std::lower_bound(first_trains.begin(),
-                                               first_trains.end(), inter_id);
+        auto first_train_it = first_trains.get_iter(storage::lower_bound(first_trains.data,
+                                               first_trains.data + first_trains.size(), inter_id));
         auto second_cost = train->GetPrice(interchange_no, to_station_no);
         for (; first_train_it != first_trains.end()
                && first_train_it->interchange_id == inter_id;

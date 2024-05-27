@@ -35,7 +35,7 @@ class BPlusTree {
 
   auto LowerBound(const KeyType &key) -> Iterator;
 
-  auto PartialSearch(const auto &key) -> std::vector<std::pair<KeyType, ValueType>>;
+  auto PartialSearch(const auto &key) -> sjtu::vector<std::pair<KeyType, ValueType>>;
 
   auto RemoveAll(const auto &key) -> void;
 

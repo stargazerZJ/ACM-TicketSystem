@@ -5,8 +5,10 @@
 #include "lru_k_replacer.h"
 
 namespace storage {
-LRUKReplacer::LRUKReplacer(size_t pool_size) {
-  evict_hint_.resize(pool_size, evitable_frames_.end());
+LRUKReplacer::LRUKReplacer(size_t pool_size) : evict_hint_(pool_size) {
+  for (auto &hint : evict_hint_) {
+    hint = evitable_frames_.end();
+  }
 }
 auto LRUKReplacer::Evict(frame_id_t *frame_id) -> bool {
   if (evitable_frames_.empty()) {
@@ -26,7 +28,7 @@ void LRUKReplacer::SetEvictable(frame_id_t frame_id, page_id_t page_id) {
   if (evict_hint_[frame_id] != evitable_frames_.end()) {
     evitable_frames_.erase(evict_hint_[frame_id]);
   }
-  evict_hint_[frame_id] = evitable_frames_.emplace(GetKDistance(page_id), frame_id).first;
+  evict_hint_[frame_id] = evitable_frames_.insert({GetKDistance(page_id), frame_id}).first;
 }
 void LRUKReplacer::SetNonevictable(frame_id_t frame_id) {
   if (evict_hint_[frame_id] != evitable_frames_.end()) {

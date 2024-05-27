@@ -7,7 +7,8 @@
 #include <cstdint>
 #include <map>
 #include <utility>
-#include <vector>
+#include <stlite/vector.h>
+#include <stlite/map.h>
 
 namespace storage {
 class LRUKReplacer {
@@ -44,7 +45,7 @@ class LRUKReplacer {
         int tail = 0;
     };
     LRUKNode access_history_[MAX_PAGE_ID]; // the Key is page_id because the history is page-based
-    std::map<time_distance_t, frame_id_t> evitable_frames_;
-    std::vector<decltype(evitable_frames_)::iterator> evict_hint_;
+    sjtu::map<time_distance_t, frame_id_t> evitable_frames_;
+    sjtu::vector<decltype(evitable_frames_)::iterator> evict_hint_;
 };
 } // namespace storage

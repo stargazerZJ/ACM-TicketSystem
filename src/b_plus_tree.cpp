@@ -479,11 +479,11 @@ auto BPlusTree<KeyType, ValueType>::SetValue(const KeyType &key, const ValueType
   return false;
 }
 template<typename KeyType, typename ValueType>
-auto BPlusTree<KeyType, ValueType>::PartialSearch(const auto &key) -> std::vector<std::pair<KeyType, ValueType> > {
+auto BPlusTree<KeyType, ValueType>::PartialSearch(const auto &key) -> sjtu::vector<std::pair<KeyType, ValueType> > {
   using KeyTypeFirst = KeyType::first_type;
   using KeyTypeSecond = KeyType::second_type;
   static_assert(std::is_same_v<decltype(key), const KeyTypeFirst &>);
-  std::vector<std::pair<KeyType, ValueType> > result;
+  sjtu::vector<std::pair<KeyType, ValueType> > result;
   auto it = LowerBound(KeyType(key, std::numeric_limits<KeyTypeSecond>::min()));
   while (it != End() && it.Key().first == key) {
     result.emplace_back(it.Key(), it.Value());

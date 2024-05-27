@@ -144,8 +144,8 @@ class BufferPoolManager {
     DiskManager<PagesPerFrame> disk_;
     LRUKReplacer replacer_;
     frame_id_t page_table_[MAX_PAGE_ID];
-    std::vector<Frame<PagesPerFrame> > buffer_;
-    std::vector<frame_id_t> free_list_;
+    sjtu::vector<Frame<PagesPerFrame> > buffer_;
+    sjtu::vector<frame_id_t> free_list_;
 
     auto FetchFrame(page_id_t page_id) -> Frame<PagesPerFrame> *;
     auto UnpinFrame(page_id_t page_id, bool is_dirty) -> bool;

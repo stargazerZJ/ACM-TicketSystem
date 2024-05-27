@@ -24,6 +24,7 @@ class vector {
   using const_pointer = typename std::allocator_traits<Allocator>::const_pointer;
   using iterator = iterator_base<false>;
   using const_iterator = iterator_base<true>;
+  pointer data = nullptr;
  private:
   template<bool is_const>
   class iterator_base {
@@ -79,7 +80,6 @@ class vector {
     auto operator<=>(const iterator_base<is_const_> &rhs) const { return ptr <=> rhs.ptr; }
   };
  private:
-  pointer data = nullptr;
   size_type length = 0;
   size_type capacity = 0;
   [[no_unique_address]] allocator_type alloc = Allocator();
@@ -100,7 +100,7 @@ class vector {
   explicit vector(size_type count) {
     data = alloc.allocate(count);
     for (size_type i = 0; i < count; ++i) {
-      alloc.construct(data + i);
+      std::allocator_traits<Allocator>::construct(alloc, data + i);
     }
     length = count;
     capacity = count;
@@ -239,6 +239,9 @@ class vector {
     }
     alloc.deallocate(data, length);
     data = new_data;
+  }
+  iterator get_iter(pointer p) {
+    return iterator(data, p);
   }
 };
 

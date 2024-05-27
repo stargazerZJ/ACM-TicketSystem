@@ -175,7 +175,7 @@ void TicketSystem::RefundTicket(std::string_view username,
     auto pending_it = pending_queue_.LowerBound(
         {{ticket.train_id, ticket.date}, 0});
     using PendingKey = decltype(pending_it.Key());
-    std::vector<PendingKey> to_delete;
+    sjtu::vector<PendingKey> to_delete;
     for (; pending_it != pending_queue_.End()
            && pending_it.Key().first ==
            storage::make_packed_pair(ticket.train_id, ticket.date);
