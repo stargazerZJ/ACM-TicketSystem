@@ -11,3 +11,8 @@ pip install -r requirements.txt
 pytion backend.py
 streamlit run home.py
 ```
+
+To shutdown the backend, run:
+```bash
+python shutdown_backend.py
+```
