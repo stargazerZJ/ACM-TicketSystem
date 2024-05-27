@@ -59,7 +59,7 @@ class UserManager {
     storage::VarLengthStore *vls_; // stores UserProfile
 
   protected:
-    std::unordered_map<storage::hash_t, UserData> logged_in_users_{};
+    sjtu::map<storage::hash_t, UserData> logged_in_users_{};
     storage::BPlusTree<storage::hash_t, storage::record_id_t> user_id_index_;
 
     int8_t GetLoggedInUserPrivilege(storage::hash_t username);

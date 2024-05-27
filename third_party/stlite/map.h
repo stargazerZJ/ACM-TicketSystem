@@ -150,6 +150,10 @@ class map {
     if (pos.found()) return {&head, pos.node()};
     else return end();
   }
+  bool contains(const Key &key) const {
+    auto pos = lower_bound_(key);
+    return pos.found();
+  }
   const_iterator find(const Key &key) const {
     auto pos = lower_bound_(key);
     if (pos.found()) return {&head, pos.node()};
