@@ -39,7 +39,6 @@ void LRUKReplacer::Remove(frame_id_t frame_id, page_id_t page_id) {
     evitable_frames_.erase(evict_hint_[frame_id]);
     evict_hint_[frame_id] = evitable_frames_.end();
   }
-  access_history_.erase(page_id);
 }
 auto LRUKReplacer::Size() const -> size_t {
   return evitable_frames_.size();

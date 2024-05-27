@@ -26,6 +26,7 @@ using hash_t = uint64_t;
 
 static constexpr int LRU_REPLACER_K = 10;
 static constexpr int BUFFER_POOL_SIZE = 2500;
+static constexpr int MAX_PAGE_ID = 8000;
 
 static constexpr char DB_FILE_NAME[] = "db.bin";
 

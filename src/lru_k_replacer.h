@@ -44,7 +44,7 @@ class LRUKReplacer {
         timestamp_t queue[replacer_k] = {};
         int tail = 0;
     };
-    std::unordered_map<page_id_t, LRUKNode> access_history_; // the Key is page_id because the history is page-based
+    LRUKNode access_history_[MAX_PAGE_ID]; // the Key is page_id because the history is page-based
     std::map<time_distance_t, frame_id_t> evitable_frames_;
     std::vector<decltype(evitable_frames_)::iterator> evict_hint_;
 };

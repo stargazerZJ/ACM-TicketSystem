@@ -77,6 +77,7 @@ void DiskManager<PagesPerFrame>::ReadFrame(page_id_t page_id, char *page_data) {
 template<int PagesPerFrame>
 unsigned int DiskManager<PagesPerFrame>::AllocateFrame() {
   if (free_head == INVALID_PAGE_ID) {
+    ASSERT(size_ < MAX_PAGE_ID);
     return size_ ++;
   }
   int new_free_head = INVALID_PAGE_ID;
