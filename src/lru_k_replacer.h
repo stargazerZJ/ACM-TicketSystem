@@ -5,7 +5,6 @@
 #pragma once
 #include <config.h>
 #include <cstdint>
-#include <map>
 #include <utility>
 #include <stlite/vector.h>
 #include <stlite/map.h>

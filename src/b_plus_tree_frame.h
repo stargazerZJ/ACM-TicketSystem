@@ -3,7 +3,6 @@
 //
 
 #pragma once
-#include <algorithm>
 #include <execution>
 #include "buffer_pool_manager.h"
 
