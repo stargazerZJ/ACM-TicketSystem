@@ -8,5 +8,6 @@ pip install -r requirements.txt
 
 ## Usage
 ```bash
+pytion backend.py
 streamlit run home.py
 ```

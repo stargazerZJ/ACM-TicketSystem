@@ -1,44 +1,27 @@
-import subprocess
-import re
+import socket
 
 
 class ApiClient:
-    def __init__(self, executable_path='./code', command_counter=1):
-        self.executable_path = executable_path
-        self.process = subprocess.Popen(
-            [self.executable_path],
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
-        )
-        self.command_counter = command_counter
-
-    def __del__(self):
-        if self.process and self.process.poll() is None:
-            self.exit()
+    def __init__(self, socket_path='/tmp/api_socket'):
+        self.socket_path = socket_path
 
     def send_command(self, command):
-        command = f"[{self.command_counter}] {command}"
         print("Sending command:", command)
-        self.process.stdin.write(command + '\n')
-        self.process.stdin.flush()
 
-        output_lines = []
-        while True:
-            output = self.process.stdout.readline().strip()
-            if not output:  # An empty line indicates the end of the output
-                break
-            output_lines.append(output)
+        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as client_socket:
+            client_socket.connect(self.socket_path)
+            client_socket.sendall(command.encode() + b'\n')
 
-        # Combine all lines into a single string, joining with newlines
-        output = "\n".join(output_lines)
-        expected_prefix = f"[{self.command_counter}]"
-        if not output.startswith(expected_prefix):
-            raise ValueError(f"Expected output to start with '{expected_prefix}', but got '{output}'")
+            output = client_socket.recv(1024).decode().strip()
+        return output
 
-        self.command_counter += 1
-        return output[len(expected_prefix) + 1:]  # Remove the prefix and the following space
+    def exit(self):
+        print("Sending exit command")
+        with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as client_socket:
+            client_socket.connect(self.socket_path)
+            client_socket.sendall(b"exit\n")
+            response = client_socket.recv(1024).decode().strip()
+        return response
 
     def validate_string(self, value, max_length, allow_spaces=False):
         if not value:
@@ -190,30 +173,9 @@ class ApiClient:
         command = f"clean"
         return self.send_command(command)
 
-    def exit(self):
-        command = f"exit"
-        output = self.send_command(command)
-        self.process.stdin.close()
-        self.process.stdout.close()
-        self.process.stderr.close()
-        self.process.terminate()
-        return output
-
-    def restart(self):
-        self.process.terminate()
-        self.process = subprocess.Popen(
-            [self.executable_path],
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
-        )
-        return "0"
-
-
 if __name__ == "__main__":
-    # Instantiate the class with the path to the executable
-    tts = ApiClient('./code')
+    # Instantiate the class
+    tts = ApiClient('/tmp/api_socket')
 
     # Use the methods to interact with the system
     print(tts.clean())
